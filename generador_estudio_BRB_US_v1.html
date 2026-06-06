@@ -1,0 +1,2773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BRB Study Generator US | High School ELL & Academic Tool | BRB Educa</title>
+<meta name="description" content="AI-powered bilingual study guide generator for US High School students (Grades 9-12). Aligned with CCSS, NGSS, and C3 Framework. English and Spanish support for ELL students.">
+<meta name="author" content="Boris Rodríguez Barrera — BRB Estrategia & Procesos">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "BRB Study Generator US",
+  "description": "AI-powered bilingual study tool for US High School ELL and native English students. Aligned with CCSS, NGSS, C3 Framework and ESSA 2015.",
+  "applicationCategory": "EducationalApplication",
+  "inLanguage": ["en-US", "es"],
+  "educationalLevel": "High School",
+  "author": {
+    "@type": "Person",
+    "name": "Boris Rodríguez Barrera",
+    "identifier": "https://orcid.org/0009-0004-6583-6439"
+  }
+}
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=JetBrains+Mono:wght@300;400;500;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<style>
+:root {
+  --navy:#0B2545; --navy-mid:#1B4F8A; --navy-light:#E8F0FB; --navy-deep:#071830;
+  --gold:#C89B2A; --gold-light:#FBF5E0; --gold-dark:#8a6a1a;
+  --green:#1A6B3C; --green-light:#E8F5EE; --green-dark:#124d2b;
+  --red:#8B1A1A; --red-light:#FDEAEA;
+  --slate:#F2F4F8; --slate-mid:#E4E9F2; --border:#C8D4E8;
+  --text:#0D1B2A; --text-mid:#3D5068; --text-light:#6B82A0;
+  --white:#FAFBFD; --shadow:0 2px 16px rgba(11,37,69,0.10);
+  --shadow-lg:0 8px 40px rgba(11,37,69,0.16);
+  --radius:7px; --radius-lg:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:16px;scroll-behavior:smooth;}
+body{font-family:'Outfit',sans-serif;background:var(--slate);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+/* ── OVERLAY ── */
+#overlay{display:none;position:fixed;inset:0;background:rgba(7,24,48,0.88);z-index:9000;align-items:center;justify-content:center;flex-direction:column;gap:14px;}
+#overlay.visible{display:flex;}
+.ov-spin{width:40px;height:40px;border:3px solid rgba(200,155,42,0.3);border-top-color:var(--gold);border-radius:50%;animation:spin 0.75s linear infinite;}
+.ov-txt{font-family:'JetBrains Mono',monospace;font-size:0.70rem;color:rgba(250,251,253,0.70);letter-spacing:0.08em;text-align:center;max-width:260px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;font-family:'JetBrains Mono',monospace;font-size:0.68rem;padding:10px 18px;border-radius:var(--radius);box-shadow:var(--shadow-lg);transform:translateY(80px);opacity:0;transition:all 0.3s;max-width:320px;line-height:1.5;}
+#toast.show{transform:translateY(0);opacity:1;}
+#toast.ok{background:var(--green);color:white;}
+#toast.err{background:var(--red);color:white;}
+#toast.info{background:var(--navy);color:var(--gold-light);}
+#toast.warn{background:var(--gold);color:white;}
+
+/* ── SCREENS ── */
+.screen{display:none;min-height:100vh;flex-direction:column;}
+.screen.active{display:flex;}
+
+/* ── CALIFORNIA / AGE MODAL ── */
+.block-modal{display:none;position:fixed;inset:0;background:rgba(7,24,48,0.92);z-index:9800;align-items:center;justify-content:center;padding:20px;}
+.block-modal.visible{display:flex;}
+.block-box{background:var(--white);border-radius:var(--radius-lg);max-width:500px;width:100%;overflow:hidden;box-shadow:var(--shadow-lg);}
+.block-hdr{padding:20px 24px 16px;border-bottom:3px solid var(--red);}
+.block-hdr.age-hdr{border-bottom-color:var(--gold);}
+.block-icon{font-size:2rem;margin-bottom:8px;}
+.block-title{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--navy);margin-bottom:4px;}
+.block-body{padding:20px 24px;}
+.block-body p{font-size:0.82rem;line-height:1.7;color:var(--text-mid);margin-bottom:10px;}
+.block-body .bilingual{background:var(--slate);border-radius:var(--radius);padding:12px 14px;border-left:3px solid var(--navy-mid);}
+.block-body .bilingual p{margin:0;font-size:0.78rem;}
+.block-body .bilingual p+p{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
+
+/* ── SCREEN 0: API KEY ── */
+#screen-api{background:linear-gradient(145deg,#071830 0%,#0B2545 60%,#1B4F8A 100%);align-items:center;justify-content:center;padding:20px;}
+.api-box{background:var(--white);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);width:100%;max-width:520px;overflow:hidden;}
+.api-hdr{background:var(--navy-deep);padding:24px 28px 18px;border-bottom:3px solid var(--gold);}
+.api-logo{font-family:'Playfair Display',serif;color:var(--white);font-size:1.3rem;margin-bottom:3px;}
+.api-logo em{color:var(--gold);font-style:normal;}
+.api-tag{font-family:'JetBrains Mono',monospace;font-size:0.58rem;color:rgba(200,155,42,0.8);letter-spacing:0.12em;text-transform:uppercase;display:block;margin-top:2px;}
+.api-body{padding:22px 28px;}
+.api-title{font-size:0.9rem;font-weight:600;color:var(--navy);margin-bottom:4px;}
+.api-desc{font-size:0.76rem;color:var(--text-mid);margin-bottom:18px;line-height:1.6;}
+.prov-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:16px;}
+.prov-tab{padding:10px 8px;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--white);font-family:'JetBrains Mono',monospace;font-size:0.67rem;font-weight:700;cursor:pointer;text-align:center;transition:all 0.15s;color:var(--text-mid);}
+.prov-tab:hover{border-color:var(--navy-mid);background:var(--navy-light);}
+.prov-tab.activo{border-color:var(--navy);background:var(--navy);color:white;}
+.prov-tab .pt-tag{font-size:0.53rem;padding:2px 5px;border-radius:2px;display:inline-block;margin-top:3px;}
+.prov-tab.activo .pt-tag{background:var(--gold);color:white;}
+.prov-tab:not(.activo) .pt-tag{background:var(--slate-mid);color:var(--text-light);}
+.pt-gratis{background:#c6f0d4!important;color:var(--green)!important;}
+.prov-tab.activo .pt-gratis{background:#27ae60!important;color:white!important;}
+.prov-inst{display:none;background:var(--slate);border:1px solid var(--border);border-radius:var(--radius);padding:13px;margin-bottom:14px;}
+.prov-inst.visible{display:block;}
+.pi-tit{font-family:'JetBrains Mono',monospace;font-size:0.60rem;letter-spacing:0.07em;text-transform:uppercase;color:var(--navy);margin-bottom:8px;font-weight:700;}
+.pi-paso{display:flex;gap:8px;align-items:flex-start;margin-bottom:5px;font-size:0.74rem;color:var(--text-mid);line-height:1.5;}
+.pi-n{background:var(--navy);color:white;border-radius:50%;width:18px;height:18px;min-width:18px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:0.58rem;font-weight:700;}
+.pi-link{display:inline-block;margin-top:7px;background:var(--navy);color:white;padding:5px 11px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:0.62rem;text-decoration:none;transition:background 0.15s;}
+.pi-link:hover{background:var(--navy-mid);}
+.pi-costo{margin-top:7px;background:white;border:1px solid var(--border);border-left:3px solid var(--gold);padding:5px 9px;font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--text);border-radius:3px;}
+.campo-api{margin-bottom:12px;}
+.campo-api label{display:block;font-size:0.64rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--navy);margin-bottom:4px;}
+.campo-api input{width:100%;font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text);background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);padding:9px 12px;outline:none;transition:all 0.15s;}
+.campo-api input:focus{border-color:var(--navy-mid);box-shadow:0 0 0 3px rgba(27,79,138,0.10);}
+.api-btn{width:100%;padding:12px;background:var(--navy);color:white;border:none;border-radius:var(--radius);font-family:'Outfit',sans-serif;font-size:0.88rem;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.api-btn:hover{background:var(--navy-mid);}
+.api-err{display:none;background:var(--red-light);border:1px solid var(--red);border-radius:var(--radius);padding:8px 12px;font-size:0.73rem;color:var(--red);margin-top:8px;line-height:1.5;}
+.api-err.visible{display:block;}
+.api-footer{padding:10px 28px;background:var(--slate);border-top:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:0.55rem;color:var(--text-light);text-align:center;line-height:1.7;}
+.standards-bar{display:flex;flex-wrap:wrap;gap:5px;margin-top:12px;justify-content:center;}
+.std-chip{font-family:'JetBrains Mono',monospace;font-size:0.52rem;padding:2px 7px;border-radius:20px;border:1px solid var(--border);color:var(--text-light);background:var(--white);}
+
+/* ── SCREEN 1: LOGIN ── */
+#screen-login{background:linear-gradient(145deg,#071830 0%,#0B2545 60%,#1B4F8A 100%);align-items:center;justify-content:center;padding:20px;}
+.login-box{background:var(--white);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);width:100%;max-width:440px;overflow:hidden;}
+.login-hdr{background:var(--navy-deep);padding:22px 26px 16px;border-bottom:3px solid var(--gold);}
+.login-logo{font-family:'Playfair Display',serif;color:var(--white);font-size:1.1rem;margin-bottom:2px;}
+.login-logo em{color:var(--gold);font-style:normal;}
+.login-sub{font-family:'JetBrains Mono',monospace;font-size:0.57rem;color:rgba(200,155,42,0.75);letter-spacing:0.10em;text-transform:uppercase;}
+.login-body{padding:22px 26px;}
+.login-tit{font-size:0.88rem;font-weight:600;color:var(--navy);margin-bottom:3px;}
+.login-desc{font-size:0.75rem;color:var(--text-mid);margin-bottom:16px;line-height:1.55;}
+.bypass-badge{display:inline-flex;align-items:center;gap:5px;background:#e8f5ee;border:1px solid rgba(26,107,60,0.3);border-radius:4px;padding:5px 10px;font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--green);margin-bottom:14px;}
+.login-campo{margin-bottom:11px;}
+.login-campo label{display:block;font-size:0.63rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--navy);margin-bottom:4px;}
+.login-campo input,.login-campo select{width:100%;font-family:'Outfit',sans-serif;font-size:0.82rem;color:var(--text);background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);padding:8px 11px;outline:none;transition:all 0.15s;}
+.login-campo input:focus,.login-campo select:focus{border-color:var(--navy-mid);box-shadow:0 0 0 3px rgba(27,79,138,0.10);}
+.age-note{font-family:'JetBrains Mono',monospace;font-size:0.60rem;color:var(--text-light);margin-top:4px;line-height:1.5;}
+.login-btn{width:100%;padding:11px;background:var(--navy);color:white;border:none;border-radius:var(--radius);font-family:'Outfit',sans-serif;font-size:0.87rem;font-weight:700;cursor:pointer;transition:all 0.2s;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:8px;}
+.login-btn:hover:not(:disabled){background:var(--navy-mid);}
+.login-btn:disabled{opacity:0.55;cursor:not-allowed;}
+.login-spin{width:15px;height:15px;border:2px solid rgba(255,255,255,0.35);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;display:none;}
+.login-btn.cargando .login-spin{display:inline-block;}
+.login-err{display:none;background:var(--red-light);border:1px solid var(--red);border-radius:var(--radius);padding:8px 12px;font-size:0.73rem;color:var(--red);margin-top:9px;line-height:1.5;}
+.login-err.visible{display:block;}
+.login-ftr{padding:10px 26px;background:var(--slate);border-top:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:0.53rem;color:var(--text-light);text-align:center;line-height:1.7;}
+
+/* ── SCREEN 2: PROFILE ── */
+#screen-perfil{background:var(--slate);}
+.pf-header{background:var(--navy-deep);padding:13px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid var(--gold);flex-wrap:wrap;gap:8px;}
+.pf-marca{font-family:'Playfair Display',serif;color:var(--white);font-size:1.0rem;}
+.pf-marca em{color:var(--gold);font-style:normal;}
+.pf-marca span{font-family:'JetBrains Mono',monospace;font-size:0.55rem;color:rgba(200,155,42,0.7);display:block;letter-spacing:0.10em;text-transform:uppercase;margin-top:1px;}
+.pf-layout{max-width:800px;margin:0 auto;padding:24px 16px 60px;}
+.pf-hero{margin-bottom:20px;}
+.pf-hero h2{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--navy);margin-bottom:3px;}
+.pf-hero h2 em{color:var(--gold);font-style:italic;}
+.pf-hero p{font-size:0.78rem;color:var(--text-mid);line-height:1.6;}
+.card-s{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:18px;margin-bottom:14px;}
+.s-tit{font-family:'JetBrains Mono',monospace;font-size:0.60rem;letter-spacing:0.10em;text-transform:uppercase;color:var(--navy);margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid var(--navy-light);display:flex;align-items:center;gap:6px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px;}
+.cp{margin-bottom:0;}
+.cp label{display:block;font-size:0.63rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--navy);margin-bottom:3px;}
+.cp label .op{color:var(--text-light);font-weight:400;text-transform:none;letter-spacing:0;font-size:0.62rem;}
+input[type="text"],input[type="email"],input[type="number"],select,textarea{width:100%;font-family:'Outfit',sans-serif;font-size:0.82rem;color:var(--text);background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);padding:7px 10px;outline:none;transition:all 0.15s;}
+input[type="text"]:focus,input[type="email"]:focus,select:focus,textarea:focus{border-color:var(--navy-mid);box-shadow:0 0 0 3px rgba(27,79,138,0.09);}
+textarea{resize:vertical;min-height:60px;line-height:1.55;}
+
+/* UI LANG TOGGLE */
+.lang-toggle-row{display:flex;gap:7px;margin-bottom:4px;}
+.lang-btn-pf{flex:1;padding:9px 10px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;text-align:center;background:var(--white);transition:all 0.15s;font-family:'JetBrains Mono',monospace;font-size:0.70rem;font-weight:700;color:var(--text-mid);}
+.lang-btn-pf:hover{border-color:var(--navy-mid);background:var(--navy-light);}
+.lang-btn-pf.activo{border-color:var(--navy);background:var(--navy);color:white;}
+
+/* STUDENT TYPE */
+.stype-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.stype-card{padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:all 0.15s;background:var(--white);}
+.stype-card:hover{border-color:var(--navy-mid);background:var(--navy-light);}
+.stype-card.activo{border-color:var(--navy);background:var(--navy);}
+.stype-card.activo .st-nom{color:white;}
+.stype-card.activo .st-desc{color:rgba(255,255,255,0.7);}
+.st-ico{font-size:1.4rem;margin-bottom:4px;}
+.st-nom{font-size:0.80rem;font-weight:700;color:var(--text);display:block;}
+.st-desc{font-size:0.63rem;color:var(--text-light);line-height:1.4;margin-top:2px;}
+
+/* GRADE TABS */
+.grade-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;}
+.grade-tab{padding:10px 8px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;text-align:center;transition:all 0.15s;background:var(--white);}
+.grade-tab:hover{border-color:var(--navy-mid);background:var(--navy-light);}
+.grade-tab.activo{border-color:var(--navy);background:var(--navy);}
+.gt-num{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--text);}
+.gt-age{font-family:'JetBrains Mono',monospace;font-size:0.57rem;color:var(--text-light);}
+.grade-tab.activo .gt-num,.grade-tab.activo .gt-age{color:white;}
+
+/* SUBJECTS */
+.mat-lista{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;}
+.mat-tag{display:flex;align-items:center;gap:4px;border-radius:20px;font-size:0.70rem;padding:3px 9px;font-weight:600;}
+.mat-tag.core{background:var(--navy-light);border:1px solid rgba(27,79,138,0.25);color:var(--navy);}
+.mat-tag.elective{background:var(--gold-light);border:1px solid rgba(200,155,42,0.3);color:var(--gold-dark);}
+.mat-tag button{background:transparent;border:none;color:inherit;cursor:pointer;font-size:0.75rem;line-height:1;padding:0;opacity:0.6;}
+.mat-tag button:hover{opacity:1;}
+.mat-inp-row{display:flex;gap:7px;}
+.mat-inp-row input{flex:1;}
+.btn-add{padding:7px 12px;background:var(--navy);color:white;border:none;border-radius:var(--radius);font-family:'JetBrains Mono',monospace;font-size:0.66rem;cursor:pointer;white-space:nowrap;transition:background 0.15s;font-weight:700;}
+.btn-add:hover{background:var(--navy-mid);}
+.chips-sug{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+.chip-sug{background:white;border:1px solid var(--border);color:var(--text-mid);font-size:0.64rem;padding:2px 8px;border-radius:20px;cursor:pointer;transition:all 0.12s;font-weight:600;}
+.chip-sug:hover{background:var(--navy);color:white;border-color:var(--navy);}
+.chip-sug.elective-chip{border-color:rgba(200,155,42,0.4);color:var(--gold-dark);}
+.chip-sug.elective-chip:hover{background:var(--gold);color:white;border-color:var(--gold);}
+
+/* INTERESTS */
+.int-chips{display:flex;flex-wrap:wrap;gap:5px;}
+.int-chip{padding:4px 11px;border:1.5px solid var(--border);border-radius:20px;font-size:0.70rem;font-weight:600;cursor:pointer;background:var(--white);color:var(--text-mid);transition:all 0.12s;user-select:none;}
+.int-chip:hover{border-color:var(--navy-mid);color:var(--navy);}
+.int-chip.activo{border-color:var(--gold);background:var(--gold);color:white;}
+
+/* PROFILE FOOTER */
+.pf-footer{display:flex;justify-content:space-between;align-items:center;margin-top:20px;padding-top:14px;border-top:1px solid var(--border);}
+.btn-guardar-pf{padding:11px 26px;background:var(--navy);color:white;border:none;border-radius:var(--radius);font-family:'Outfit',sans-serif;font-size:0.87rem;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.btn-guardar-pf:hover{background:var(--navy-mid);}
+.pf-saved{font-family:'JetBrains Mono',monospace;font-size:0.60rem;color:var(--green);display:none;align-items:center;gap:5px;}
+.pf-saved.visible{display:flex;}
+
+/* ── SCREEN 3: GENERATOR ── */
+#screen-gen{background:var(--slate);}
+.gen-header{background:var(--navy-deep);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid var(--gold);position:sticky;top:0;z-index:200;flex-wrap:wrap;gap:8px;}
+.gen-marca{display:flex;flex-direction:column;}
+.gen-titulo{font-family:'Playfair Display',serif;color:var(--white);font-size:1.05rem;}
+.gen-titulo em{color:var(--gold);font-style:normal;}
+.gen-sub{font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,0.45);font-size:0.53rem;letter-spacing:0.08em;text-transform:uppercase;margin-top:1px;}
+.gen-right{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.est-badge{font-family:'JetBrains Mono',monospace;font-size:0.57rem;color:rgba(255,255,255,0.65);}
+.est-badge strong{color:var(--gold);}
+.consultas-badge{font-family:'JetBrains Mono',monospace;font-size:0.55rem;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);color:rgba(255,255,255,0.65);padding:3px 7px;border-radius:3px;}
+.consultas-badge.agotado{background:rgba(139,26,26,0.4);border-color:var(--red);color:#f08080;}
+.btn-hdr-sm{background:transparent;border:1px solid rgba(255,255,255,0.22);color:rgba(255,255,255,0.60);font-family:'JetBrains Mono',monospace;font-size:0.55rem;padding:4px 9px;border-radius:3px;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.btn-hdr-sm:hover{border-color:rgba(255,255,255,0.55);color:white;}
+.btn-hdr-sm.accent{border-color:var(--gold);color:var(--gold);}
+
+/* GENERATOR LAYOUT */
+.gen-layout{max-width:1200px;margin:0 auto;padding:16px 13px 60px;display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;}
+.panel{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden;}
+.panel-hdr{background:var(--navy);padding:11px 16px;display:flex;align-items:center;gap:9px;}
+.panel-num{background:var(--gold);color:white;font-family:'JetBrains Mono',monospace;font-size:0.64rem;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700;}
+.panel-tit{font-family:'Playfair Display',serif;color:white;font-size:0.87rem;}
+.panel-body{padding:15px;}
+.campo{margin-bottom:12px;}
+.campo label{display:block;font-size:0.63rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--navy);margin-bottom:3px;}
+.campo label .op{color:var(--text-light);font-weight:400;text-transform:none;letter-spacing:0;font-size:0.62rem;}
+.campo-fila{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.sep-tit{font-size:0.60rem;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:var(--text-light);margin-bottom:7px;display:flex;align-items:center;gap:7px;}
+.sep-tit::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* OUTPUT LANG SELECTOR */
+.outlang-grid{display:grid;grid-template-columns:1fr;gap:5px;margin-bottom:12px;}
+.outlang-grid.three{grid-template-columns:1fr 1fr 1fr;}
+.outlang-btn{padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;text-align:center;background:var(--white);transition:all 0.15s;font-size:0.71rem;font-weight:600;color:var(--text-mid);}
+.outlang-btn:hover{border-color:var(--navy-mid);background:var(--navy-light);}
+.outlang-btn.activo{border-color:var(--navy);background:var(--navy);color:white;}
+.outlang-btn .ol-ico{display:block;font-size:1.0rem;margin-bottom:2px;}
+.outlang-btn .ol-nom{display:block;font-size:0.68rem;font-weight:700;}
+.outlang-btn .ol-desc{display:block;font-size:0.58rem;opacity:0.75;margin-top:1px;}
+
+/* STUDY TYPE GRID */
+.tipo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px;}
+.tipo-item{padding:8px 5px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;text-align:center;transition:all 0.15s;background:var(--white);}
+.tipo-item:hover{border-color:var(--navy-mid);background:var(--navy-light);}
+.tipo-item.activo{border-color:var(--navy);background:var(--navy);}
+.tipo-item.activo .ti-nom,.tipo-item.activo .ti-desc{color:white;}
+.ti-ico{font-size:1.1rem;margin-bottom:2px;}
+.ti-nom{font-size:0.67rem;font-weight:700;color:var(--text);display:block;line-height:1.2;}
+.ti-desc{font-size:0.54rem;color:var(--text-light);margin-top:1px;}
+
+/* PRACTICE SUBTYPES */
+.sub-prac{display:none;background:var(--gold-light);border:1px solid rgba(200,155,42,0.25);border-radius:var(--radius);padding:10px;margin-bottom:11px;}
+.sub-prac.visible{display:block;}
+.sub-prac-tit{font-family:'JetBrains Mono',monospace;font-size:0.59rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--gold-dark);margin-bottom:7px;}
+.sub-prac-grid{display:flex;flex-wrap:wrap;gap:5px;}
+.sub-chip{padding:3px 9px;border:1px solid rgba(200,155,42,0.3);border-radius:20px;font-size:0.67rem;font-weight:600;cursor:pointer;background:white;color:var(--gold-dark);transition:all 0.12s;}
+.sub-chip:hover,.sub-chip.activo{background:var(--gold);color:white;border-color:var(--gold);}
+
+/* FILE ATTACH */
+.adj-zona{border:2px dashed var(--border);border-radius:var(--radius);padding:12px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--slate);margin-bottom:9px;}
+.adj-zona:hover,.adj-zona.dragover{border-color:var(--navy-mid);background:var(--navy-light);}
+.adj-zona input[type="file"]{display:none;}
+.adj-ico{font-size:1.3rem;margin-bottom:3px;}
+.adj-txt{font-size:0.71rem;color:var(--text-light);}
+.adj-txt strong{color:var(--navy);}
+.adj-info{display:none;background:var(--green-light);border:1px solid rgba(26,107,60,0.25);border-radius:4px;padding:7px 11px;font-family:'JetBrains Mono',monospace;font-size:0.63rem;color:var(--green);align-items:center;gap:5px;}
+.adj-info.visible{display:flex;}
+.adj-quit{background:transparent;border:none;cursor:pointer;color:var(--red);font-size:0.75rem;margin-left:auto;}
+
+/* SAVI TOGGLE */
+.savi-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:9px 11px;background:var(--slate);border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;margin-bottom:9px;transition:all 0.15s;}
+.savi-toggle-row:hover{border-color:var(--navy-mid);}
+.savi-toggle-label{font-size:0.78rem;font-weight:600;color:var(--navy);display:flex;align-items:center;gap:7px;}
+.savi-badge{font-family:'JetBrains Mono',monospace;font-size:0.53rem;padding:2px 8px;border-radius:3px;}
+.savi-badge.on{background:var(--green-light);color:var(--green);border:1px solid rgba(26,107,60,0.3);}
+.savi-badge.off{background:var(--slate-mid);color:var(--text-light);border:1px solid var(--border);}
+
+/* YOUTUBE TOGGLE */
+.yt-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:9px 11px;background:var(--slate);border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:all 0.15s;}
+.yt-toggle-row:hover{border-color:var(--navy-mid);}
+
+/* GENERATE BUTTON */
+.btn-generar{width:100%;padding:12px;background:var(--navy);color:white;border:none;border-radius:var(--radius);font-family:'Outfit',sans-serif;font-size:0.88rem;font-weight:700;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:7px;margin-top:4px;}
+.btn-generar:hover:not(:disabled){background:var(--navy-mid);transform:translateY(-1px);}
+.btn-generar:disabled{opacity:0.50;cursor:not-allowed;transform:none;}
+
+/* RESULT PANEL */
+.res-header{background:var(--green);padding:10px 15px;display:flex;align-items:center;justify-content:space-between;gap:7px;flex-wrap:wrap;}
+.res-titulo{font-family:'Playfair Display',serif;color:white;font-size:0.88rem;}
+.res-acciones{display:flex;gap:5px;flex-wrap:wrap;}
+.btn-acc{padding:5px 9px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:0.58rem;font-weight:600;cursor:pointer;border:1.5px solid;transition:all 0.15s;}
+.btn-copiar{background:transparent;border-color:rgba(255,255,255,0.5);color:white;}
+.btn-copiar:hover:not(:disabled){background:rgba(255,255,255,0.15);}
+.btn-descargar{background:var(--gold);border-color:var(--gold);color:white;}
+.btn-descargar:hover:not(:disabled){background:var(--gold-dark);}
+.btn-limpiar{background:transparent;border-color:rgba(255,255,255,0.3);color:rgba(255,255,255,0.7);}
+.btn-limpiar:hover:not(:disabled){background:rgba(255,255,255,0.1);color:white;}
+.btn-acc:disabled{opacity:0.35;cursor:not-allowed;}
+
+/* RESULT TABS */
+.res-tabs{display:flex;background:#eef5f0;border-bottom:2px solid var(--border);}
+.rtab{padding:8px 14px;font-family:'JetBrains Mono',monospace;font-size:0.61rem;font-weight:700;cursor:pointer;color:var(--text-light);border:none;background:transparent;transition:all 0.15s;border-bottom:3px solid transparent;letter-spacing:0.04em;margin-bottom:-2px;}
+.rtab:hover{color:var(--navy);background:rgba(27,79,138,0.06);}
+.rtab.activo{color:var(--navy);border-bottom-color:var(--gold);background:white;}
+
+/* VOICE BAR */
+.voz-bar{display:none;background:#0a1f0f;border-top:1px solid rgba(255,255,255,0.07);padding:8px 13px;gap:5px;flex-direction:column;}
+.voz-bar.visible{display:flex;}
+.voz-row1{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.voz-row2{display:flex;align-items:center;justify-content:space-between;}
+.btn-voz{padding:4px 9px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:0.58rem;font-weight:600;cursor:pointer;border:1.5px solid;transition:all 0.15s;display:inline-flex;align-items:center;gap:3px;}
+.btn-voz-play{background:var(--green);border-color:var(--green);color:white;}
+.btn-voz-play:hover:not(:disabled){background:var(--green-dark);}
+.btn-voz-pause,.btn-voz-stop,.btn-voz-prev,.btn-voz-next{background:transparent;border-color:rgba(255,255,255,0.3);color:rgba(255,255,255,0.7);}
+.btn-voz-pause:hover:not(:disabled),.btn-voz-stop:hover:not(:disabled),.btn-voz-prev:hover:not(:disabled),.btn-voz-next:hover:not(:disabled){background:rgba(255,255,255,0.1);color:white;}
+.btn-voz:disabled{opacity:0.3;cursor:not-allowed;}
+.voz-speed{display:flex;align-items:center;gap:5px;}
+.voz-speed-lbl{font-family:'JetBrains Mono',monospace;font-size:0.52rem;color:rgba(255,255,255,0.4);text-transform:uppercase;}
+.voz-speed select{font-family:'JetBrains Mono',monospace;font-size:0.61rem;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.16);color:white;border-radius:4px;padding:2px 6px;cursor:pointer;outline:none;width:auto;}
+.voz-prog{font-family:'JetBrains Mono',monospace;font-size:0.57rem;color:rgba(255,255,255,0.5);flex:1;text-align:center;}
+
+/* STATUS BAR */
+.estado-bar{padding:5px 14px;background:#f0f4f8;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:0.57rem;color:var(--text-light);}
+.estado-dot{width:7px;height:7px;border-radius:50%;background:var(--border);flex-shrink:0;}
+.estado-dot.cargando{background:var(--gold);animation:pulsar 0.9s infinite;}
+.estado-dot.ok{background:var(--green);}
+.estado-dot.error{background:var(--red);}
+@keyframes pulsar{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+/* RESULT BODY */
+.res-body{padding:14px;min-height:360px;position:relative;}
+.placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;color:var(--text-light);text-align:center;gap:7px;}
+.ph-ico{font-size:2.2rem;opacity:0.2;}
+.ph-txt{font-size:0.76rem;opacity:0.55;max-width:220px;line-height:1.55;}
+.loading-r{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:300px;gap:11px;}
+.loading-r.visible{display:flex;}
+.spinner{width:30px;height:30px;border:3px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:spin 0.7s linear infinite;}
+.loading-txt{font-size:0.75rem;color:var(--text-mid);}
+#resultado-texto{display:none;font-family:'JetBrains Mono',monospace;font-size:0.72rem;line-height:1.80;color:var(--text);white-space:pre-wrap;word-break:break-word;background:#f8f9fc;border:1px solid var(--border);border-radius:var(--radius);padding:13px;max-height:560px;overflow-y:auto;}
+#resultado-texto.visible{display:block;}
+.error-msg{display:none;background:var(--red-light);border:1px solid var(--red);border-radius:var(--radius);padding:10px 13px;font-size:0.76rem;color:var(--red);line-height:1.5;}
+.error-msg.visible{display:block;}
+
+/* SAVI BLOCK — STRONG VERSION */
+.savi-blk{display:none;background:linear-gradient(135deg,#f8f9fc 0%,#eef5ff 100%);border:2px solid var(--navy-mid);border-radius:var(--radius-lg);padding:14px;margin-top:12px;}
+.savi-blk.visible{display:block;}
+.savi-hdr{display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.savi-hdr-icon{font-size:1.3rem;}
+.savi-hdr-title{font-family:'Playfair Display',serif;font-size:0.95rem;color:var(--navy);}
+.savi-hdr-sub{font-family:'JetBrains Mono',monospace;font-size:0.55rem;color:var(--text-light);margin-top:1px;}
+.savi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.savi-item{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:10px 11px;border-left:3px solid var(--navy-mid);}
+.savi-item.s-item{border-left-color:#1A6B8A;}
+.savi-item.a-item{border-left-color:#8B6A1A;}
+.savi-item.v-item{border-left-color:#4A1A8B;}
+.savi-item.i-item{border-left-color:#8B1A3A;}
+.savi-letra{font-family:'Playfair Display',serif;font-size:0.88rem;font-weight:700;color:var(--navy);margin-bottom:3px;}
+.savi-desc{font-size:0.70rem;color:var(--text-mid);line-height:1.5;margin-bottom:5px;}
+.savi-action{font-family:'JetBrains Mono',monospace;font-size:0.59rem;color:var(--green-dark);background:var(--green-light);border:1px solid rgba(26,107,60,0.2);border-radius:3px;padding:4px 7px;line-height:1.4;}
+.savi-footer{margin-top:10px;padding:8px 10px;background:rgba(11,37,69,0.05);border-radius:var(--radius);font-family:'JetBrains Mono',monospace;font-size:0.59rem;color:var(--text-mid);line-height:1.6;text-align:center;}
+
+/* CHAT */
+.chat-msgs{background:var(--slate);border:1px solid var(--border);border-radius:var(--radius);padding:10px;min-height:110px;max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:8px;}
+.chat-msg{display:flex;gap:7px;align-items:flex-start;}
+.chat-msg.usuario{flex-direction:row-reverse;}
+.chat-avatar{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.72rem;flex-shrink:0;font-weight:700;}
+.chat-msg.ia .chat-avatar{background:var(--navy);color:white;}
+.chat-msg.usuario .chat-avatar{background:var(--gold);color:white;}
+.chat-burbuja{padding:7px 10px;border-radius:8px;font-size:0.73rem;line-height:1.55;max-width:85%;white-space:pre-wrap;word-break:break-word;}
+.chat-msg.ia .chat-burbuja{background:white;border:1px solid var(--border);color:var(--text);}
+.chat-msg.usuario .chat-burbuja{background:var(--navy);color:white;}
+.chat-input-row{display:flex;gap:7px;}
+.chat-input-row input{flex:1;font-family:'Outfit',sans-serif;font-size:0.78rem;}
+.btn-chat-send{padding:7px 13px;background:var(--navy);color:white;border:none;border-radius:var(--radius);font-family:'JetBrains Mono',monospace;font-size:0.66rem;font-weight:700;cursor:pointer;transition:background 0.15s;white-space:nowrap;}
+.btn-chat-send:hover:not(:disabled){background:var(--navy-mid);}
+.btn-chat-send:disabled{opacity:0.45;cursor:not-allowed;}
+
+/* YOUTUBE */
+.yt-tit{font-family:'JetBrains Mono',monospace;font-size:0.59rem;letter-spacing:0.07em;text-transform:uppercase;color:#c0391b;margin-bottom:8px;font-weight:700;}
+.yt-btns{display:flex;flex-direction:column;gap:5px;}
+.yt-btn{display:flex;align-items:center;gap:8px;padding:7px 11px;background:white;border:1px solid rgba(212,80,10,0.2);border-radius:4px;cursor:pointer;text-decoration:none;transition:all 0.15s;}
+.yt-btn:hover{background:#fff3ee;border-color:#c0391b;}
+.yt-btn-ico{font-size:1rem;flex-shrink:0;}
+.yt-btn-query{font-size:0.72rem;font-weight:700;color:var(--text);display:block;}
+.yt-btn-desc{font-size:0.60rem;color:var(--text-light);}
+.yt-btn-arrow{color:#c0391b;font-size:0.75rem;flex-shrink:0;margin-left:auto;}
+
+/* HISTORY */
+.hist-blq{margin-top:11px;display:none;}
+.hist-blq.visible{display:block;}
+.hist-tit{font-family:'JetBrains Mono',monospace;font-size:0.58rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--navy);margin-bottom:5px;display:flex;align-items:center;justify-content:space-between;}
+.hist-lista{display:flex;flex-direction:column;gap:4px;max-height:170px;overflow-y:auto;}
+.hist-item{background:var(--slate);border:1px solid var(--border);border-radius:4px;padding:6px 9px;display:flex;align-items:center;gap:6px;transition:all 0.12s;}
+.hist-item:hover{border-color:var(--navy);background:var(--navy-light);}
+.hist-info{font-size:0.70rem;color:var(--text);font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;}
+.hist-fecha{font-family:'JetBrains Mono',monospace;font-size:0.55rem;color:var(--text-light);flex-shrink:0;}
+.hist-del{background:transparent;border:none;color:var(--text-light);cursor:pointer;font-size:0.73rem;padding:1px 3px;transition:color 0.12s;}
+.hist-del:hover{color:var(--red);}
+.btn-limpiar-hist{background:transparent;border:none;font-family:'JetBrains Mono',monospace;font-size:0.55rem;color:var(--text-light);cursor:pointer;}
+.btn-limpiar-hist:hover{color:var(--red);}
+
+/* TEACHER CODE TAB */
+.coming-soon-box{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;text-align:center;gap:10px;padding:20px;}
+.cs-ico{font-size:2.5rem;opacity:0.3;}
+.cs-title{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--navy);}
+.cs-desc{font-size:0.76rem;color:var(--text-mid);max-width:280px;line-height:1.6;}
+.cs-badge{font-family:'JetBrains Mono',monospace;font-size:0.60rem;padding:4px 12px;background:var(--gold-light);border:1px solid rgba(200,155,42,0.3);color:var(--gold-dark);border-radius:20px;}
+
+/* FOOTER */
+footer{background:var(--navy-deep);color:rgba(255,255,255,0.55);text-align:center;padding:14px 26px;font-family:'JetBrains Mono',monospace;font-size:0.54rem;letter-spacing:0.04em;line-height:1.9;border-top:3px solid var(--gold);}
+footer strong{color:white;}
+footer .std-row{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;margin-top:6px;}
+footer .std-pill{padding:2px 8px;border:1px solid rgba(200,155,42,0.4);border-radius:20px;font-size:0.50rem;color:rgba(200,155,42,0.75);}
+
+/* FAB */
+#fab-errores{position:fixed;bottom:1.5rem;left:1.5rem;z-index:8000;width:40px;height:40px;border-radius:50%;background:var(--gold);color:white;border:none;font-size:1.0rem;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.22);display:none;align-items:center;justify-content:center;}
+
+/* RESPONSIVE */
+@media(max-width:820px){
+  .gen-layout{grid-template-columns:1fr;padding:9px 8px 40px;}
+  .gen-header{padding:9px 13px;}
+  .tipo-grid{grid-template-columns:repeat(2,1fr);}
+  .campo-fila{grid-template-columns:1fr;}
+  .g2,.g3{grid-template-columns:1fr;}
+  .savi-grid{grid-template-columns:1fr;}
+  .grade-tabs{grid-template-columns:repeat(2,1fr);}
+  .pf-layout{padding:14px 9px 40px;}
+  .outlang-grid.three{grid-template-columns:1fr;}
+}
+@media(max-width:480px){
+  .tipo-grid{grid-template-columns:repeat(2,1fr);}
+  .prov-tabs{grid-template-columns:1fr;}
+  .stype-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<div id="overlay"><div class="ov-spin"></div><div class="ov-txt" id="ov-txt">Processing...</div></div>
+<div id="toast"></div>
+
+<!-- CALIFORNIA BLOCK MODAL -->
+<div class="block-modal" id="modal-california">
+  <div class="block-box">
+    <div class="block-hdr">
+      <div class="block-icon">⚠️</div>
+      <div class="block-title">Geographic Restriction</div>
+    </div>
+    <div class="block-body">
+      <div class="bilingual">
+        <p><strong>English:</strong> This platform is not currently available to users located in California due to state-specific data privacy regulations (California Consumer Privacy Act — CCPA / AB 375). We are working to achieve full compliance. If you believe this is an error, please contact: bbbarrera1986@gmail.com</p>
+        <p><strong>Español:</strong> Esta plataforma no está disponible actualmente para usuarios en California debido a regulaciones estatales de privacidad de datos (CCPA / AB 375). Estamos trabajando para lograr pleno cumplimiento.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AGE BLOCK MODAL -->
+<div class="block-modal" id="modal-age">
+  <div class="block-box">
+    <div class="block-hdr age-hdr">
+      <div class="block-icon">🔒</div>
+      <div class="block-title" id="age-modal-title">Age Restriction</div>
+    </div>
+    <div class="block-body">
+      <div class="bilingual">
+        <p id="age-modal-en"><strong>English:</strong> This platform is designed for students aged 14 to 18 (High School, Grades 9–12). Access requires being at least 14 years old in compliance with applicable U.S. digital privacy regulations. If you are under 14, please ask a parent, guardian, or school counselor for appropriate learning resources.</p>
+        <p id="age-modal-es"><strong>Español:</strong> Esta plataforma está diseñada para estudiantes de 14 a 18 años (High School, Grados 9–12). El acceso requiere tener al menos 14 años de acuerdo con las regulaciones de privacidad digital aplicables en EE.UU. Si tenés menos de 14 años, consultá con un padre, tutor o consejero escolar.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SCREEN 0 — API KEY
+══════════════════════════════════════ -->
+<div id="screen-api" class="screen active">
+  <div class="api-box">
+    <div class="api-hdr">
+      <div class="api-logo">BRB Study Generator <em>US</em></div>
+      <div class="api-tag">Step 1 of 3 — AI Configuration · Paso 1 de 3 — Configuración IA</div>
+    </div>
+    <div class="api-body">
+      <div class="api-title" id="api-title">Select your AI assistant</div>
+      <p class="api-desc" id="api-desc">Choose a provider and get your API key. The key is never stored — it's only used in this session.</p>
+      <div class="prov-tabs">
+        <button class="prov-tab activo" onclick="selProv('gemini',this)">
+          <span style="display:block;font-size:0.76rem;">Gemini</span><span class="pt-tag pt-gratis">FREE</span>
+        </button>
+        <button class="prov-tab" onclick="selProv('openai',this)">
+          <span style="display:block;font-size:0.76rem;">ChatGPT</span><span class="pt-tag">PAID</span>
+        </button>
+        <button class="prov-tab" onclick="selProv('anthropic',this)">
+          <span style="display:block;font-size:0.76rem;">Claude</span><span class="pt-tag">PAID</span>
+        </button>
+      </div>
+      <div class="prov-inst visible" id="inst-gemini">
+        <div class="pi-tit">How to get your Gemini API Key — FREE</div>
+        <div class="pi-paso"><div class="pi-n">1</div><div>Click the button below to go to Google AI Studio.</div></div>
+        <div class="pi-paso"><div class="pi-n">2</div><div>Sign in with your Google account.</div></div>
+        <div class="pi-paso"><div class="pi-n">3</div><div>Click <strong>"Get API Key"</strong> → <strong>"Create API key"</strong>.</div></div>
+        <div class="pi-paso"><div class="pi-n">4</div><div>Copy the key (starts with "AIza...") and paste it below.</div></div>
+        <a class="pi-link" href="https://aistudio.google.com/apikey" target="_blank">🔑 Go to Google AI Studio →</a>
+        <div class="pi-costo">Cost: FREE · No credit card required · Best for students</div>
+      </div>
+      <div class="prov-inst" id="inst-openai">
+        <div class="pi-tit">How to get your OpenAI API Key</div>
+        <div class="pi-paso"><div class="pi-n">1</div><div>Click the button below to go to OpenAI Platform.</div></div>
+        <div class="pi-paso"><div class="pi-n">2</div><div>Sign in or create an account.</div></div>
+        <div class="pi-paso"><div class="pi-n">3</div><div>Go to <strong>"API Keys"</strong> → <strong>"Create new secret key"</strong>.</div></div>
+        <div class="pi-paso"><div class="pi-n">4</div><div>Copy the key (starts with "sk-..."). You need account credit.</div></div>
+        <a class="pi-link" href="https://platform.openai.com/api-keys" target="_blank">🔑 Go to OpenAI Platform →</a>
+        <div class="pi-costo">Cost: ~$0.00015 USD per generation · Credit card required</div>
+      </div>
+      <div class="prov-inst" id="inst-anthropic">
+        <div class="pi-tit">How to get your Claude (Anthropic) API Key</div>
+        <div class="pi-paso"><div class="pi-n">1</div><div>Click the button below to go to Anthropic Console.</div></div>
+        <div class="pi-paso"><div class="pi-n">2</div><div>Create an account or sign in.</div></div>
+        <div class="pi-paso"><div class="pi-n">3</div><div>Go to <strong>"API Keys"</strong> → <strong>"Create Key"</strong>.</div></div>
+        <div class="pi-paso"><div class="pi-n">4</div><div>Copy the key (starts with "sk-ant-...").</div></div>
+        <a class="pi-link" href="https://console.anthropic.com" target="_blank">🔑 Go to Anthropic Console →</a>
+        <div class="pi-costo">Cost: ~$0.0003 USD per generation · Credit card required</div>
+      </div>
+      <div class="campo-api">
+        <label id="lbl-apikey">Your API Key</label>
+        <input type="password" id="apikey-input" placeholder="Paste your API Key here..."
+          onkeydown="if(event.key==='Enter') confirmarApiKey()">
+      </div>
+      <button class="api-btn" onclick="confirmarApiKey()" id="api-btn">Continue →</button>
+      <div class="api-err" id="api-err"></div>
+    </div>
+    <div class="api-footer">
+      BRB Estrategia &amp; Procesos · Soberanía Técnica Ediciones · Boris Rodríguez Barrera<br>
+      ORCID: 0009-0004-6583-6439 · bbbarrera1986@gmail.com · Puerto Madryn, Argentina<br>
+      Your API Key is never stored — only used in this session.
+      <div class="standards-bar">
+        <span class="std-chip">CCSS</span><span class="std-chip">NGSS</span>
+        <span class="std-chip">C3 Framework</span><span class="std-chip">ESSA 2015</span>
+        <span class="std-chip">Grades 9–12</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SCREEN 1 — LOGIN
+══════════════════════════════════════ -->
+<div id="screen-login" class="screen">
+  <div class="login-box">
+    <div class="login-hdr">
+      <div class="login-logo">BRB Study Generator <em>US</em></div>
+      <div class="login-sub">Step 2 of 3 — Access · Paso 2 de 3 — Acceso</div>
+    </div>
+    <div class="login-body">
+      <div class="login-tit" id="login-tit">Enter your license</div>
+      <p class="login-desc" id="login-desc">Enter your email and license key to access the platform.</p>
+      <div class="bypass-badge" id="bypass-badge" style="display:none;">✓ TEST MODE — No license required / Sin licencia requerida</div>
+      <div class="login-campo">
+        <label id="lbl-email">Email</label>
+        <input type="email" id="login-email" placeholder="your@email.com" autocomplete="email">
+      </div>
+      <div class="login-campo">
+        <label id="lbl-clave">License Key / Clave de licencia</label>
+        <input type="password" id="login-clave" placeholder="BRB-US-2026-XXXX"
+          onkeydown="if(event.key==='Enter') verificarAcceso()">
+      </div>
+      <div class="login-campo">
+        <label id="lbl-birth">Year of Birth / Año de nacimiento</label>
+        <select id="login-birth" onchange="checkAge()"></select>
+        <div class="age-note" id="age-note">Platform for students aged 14–18 · Plataforma para estudiantes de 14–18 años</div>
+      </div>
+      <button class="login-btn" id="login-btn" onclick="verificarAcceso()">
+        <div class="login-spin"></div>
+        <span id="login-btn-txt">Access Platform →</span>
+      </button>
+      <div class="login-err" id="login-err"></div>
+    </div>
+    <div class="login-ftr">Boris Rodríguez Barrera · BRB Estrategia &amp; Procesos · Soberanía Técnica Ediciones<br>
+    Aligned with CCSS · NGSS · C3 Framework · ESSA 2015 | High School Grades 9–12</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SCREEN 2 — PROFILE
+══════════════════════════════════════ -->
+<div id="screen-perfil" class="screen">
+  <div class="pf-header">
+    <div class="pf-marca">BRB Study Generator <em>US</em><span>Step 3 of 3 — Your Profile · Tu Perfil</span></div>
+    <div style="display:flex;gap:7px;">
+      <button class="btn-hdr-sm" onclick="saltarPerfil()" id="btn-skip">Complete later →</button>
+    </div>
+  </div>
+  <div class="pf-layout">
+    <div class="pf-hero">
+      <h2>Your <em>Profile</em></h2>
+      <p id="pf-hero-desc">Set it up once. The generator uses your information to personalize study material by grade, subject, and context. You can edit it anytime.</p>
+    </div>
+
+    <!-- PLATFORM LANGUAGE -->
+    <div class="card-s">
+      <div class="s-tit">🌐 <span id="lbl-lang-platform">Platform Language / Idioma de la plataforma</span></div>
+      <div class="lang-toggle-row">
+        <button class="lang-btn-pf activo" id="langbtn-en" onclick="setUiLang('en',this)">🇺🇸 English</button>
+        <button class="lang-btn-pf" id="langbtn-es" onclick="setUiLang('es',this)">🇲🇽 Español</button>
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.58rem;color:var(--text-light);margin-top:5px;" id="lang-note">Changing the language updates all interface labels.</div>
+    </div>
+
+    <!-- STUDENT TYPE -->
+    <div class="card-s">
+      <div class="s-tit">🎓 <span id="lbl-student-type">Student Type / Tipo de estudiante</span></div>
+      <div class="stype-grid">
+        <div class="stype-card activo" onclick="selStudentType('ell',this)" id="stype-ell">
+          <div class="st-ico">🌎</div>
+          <span class="st-nom" id="stype-ell-nom">ELL — Hispanic Spanish Speaker</span>
+          <span class="st-desc" id="stype-ell-desc">Spanish is your home language. You study academic content in English and want support in both languages.</span>
+        </div>
+        <div class="stype-card" onclick="selStudentType('native',this)" id="stype-native">
+          <div class="st-ico">📘</div>
+          <span class="st-nom" id="stype-native-nom">English-Native / Fluent</span>
+          <span class="st-desc" id="stype-native-desc">English is your primary academic language. You want study material in English.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PERSONAL INFO -->
+    <div class="card-s">
+      <div class="s-tit">👤 <span id="lbl-personal">Personal Information</span></div>
+      <div class="g3">
+        <div class="cp">
+          <label id="lbl-name">Name <span class="op">(optional)</span></label>
+          <input type="text" id="pf-nombre" placeholder="Your name...">
+        </div>
+        <div class="cp">
+          <label id="lbl-state">State</label>
+          <select id="pf-state" onchange="checkStateForCalifornia()">
+            <option value="">— Select state —</option>
+          </select>
+        </div>
+        <div class="cp">
+          <label id="lbl-city">City / District</label>
+          <input type="text" id="pf-city" placeholder="e.g. Houston, TX...">
+        </div>
+      </div>
+    </div>
+
+    <!-- GRADE -->
+    <div class="card-s">
+      <div class="s-tit">📚 <span id="lbl-grade-section">Grade Level</span></div>
+      <div class="grade-tabs">
+        <div class="grade-tab" onclick="selGrade('grade9',this)" id="gtab-grade9">
+          <div class="gt-num">9th</div><div class="gt-age">14–15 yrs</div>
+        </div>
+        <div class="grade-tab activo" onclick="selGrade('grade10',this)" id="gtab-grade10">
+          <div class="gt-num">10th</div><div class="gt-age">15–16 yrs</div>
+        </div>
+        <div class="grade-tab" onclick="selGrade('grade11',this)" id="gtab-grade11">
+          <div class="gt-num">11th</div><div class="gt-age">16–17 yrs</div>
+        </div>
+        <div class="grade-tab" onclick="selGrade('grade12',this)" id="gtab-grade12">
+          <div class="gt-num">12th</div><div class="gt-age">17–18 yrs</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUBJECTS -->
+    <div class="card-s">
+      <div class="s-tit">📖 <span id="lbl-subjects">My Subjects</span></div>
+      <div class="mat-lista" id="pf-mat-lista"></div>
+      <div class="mat-inp-row" style="margin-bottom:7px;">
+        <input type="text" id="pf-mat-input" placeholder="Add a subject..." onkeydown="if(event.key==='Enter'){event.preventDefault();agregarMateria();}">
+        <button class="btn-add" onclick="agregarMateria()" id="btn-add-mat">+ Add</button>
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.57rem;color:var(--text-light);margin-bottom:5px;" id="lbl-core-sug">Core subjects (click to add):</div>
+      <div class="chips-sug" id="pf-chips-core"></div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.57rem;color:var(--gold-dark);margin:6px 0 4px;" id="lbl-elective-sug">Electives / AP (click to add):</div>
+      <div class="chips-sug" id="pf-chips-elec"></div>
+    </div>
+
+    <!-- INTERESTS & CONTEXT -->
+    <div class="card-s">
+      <div class="s-tit">⭐ <span id="lbl-interests">Interests & Context</span></div>
+      <div class="campo" style="margin-bottom:11px;">
+        <label id="lbl-int-label">What are your interests? <span class="op">(AI uses them for examples)</span></label>
+        <div class="int-chips" id="int-chips">
+          <span class="int-chip" onclick="toggleInt(this)" data-v="sports">⚽ Sports</span>
+          <span class="int-chip" onclick="toggleInt(this)" data-v="music">🎵 Music</span>
+          <span class="int-chip" onclick="toggleInt(this)" data-v="gaming">🎮 Gaming</span>
+          <span class="int-chip" onclick="toggleInt(this)" data-v="technology">💻 Technology</span>
+          <span class="int-chip" onclick="toggleInt(this)" data-v="cooking">🍳 Cooking</span>
+          <span class="int-chip" onclick="toggleInt(this)" data-v="nature">🌿 Nature</span>
+          <span class="int-chip" onclick="toggleInt(this)" data-v="art">🎨 Art</span>
+          <span class="int-chip" onclick="toggleInt(this)" data-v="cars">🚗 Cars</span>
+          <span class="int-chip" onclick="toggleInt(this)" data-v="science">🔬 Science</span>
+          <span class="int-chip" onclick="toggleInt(this)" data-v="community">🤝 Community</span>
+        </div>
+      </div>
+      <div class="cp">
+        <label id="lbl-ctx">Anything else the AI should know? <span class="op">(optional)</span></label>
+        <textarea id="pf-contexto" rows="2" placeholder="e.g. I struggle with reading in English, I learn better with visual examples..."></textarea>
+      </div>
+    </div>
+
+    <div class="pf-footer">
+      <div class="pf-saved" id="pf-saved">✓ Profile saved</div>
+      <div style="display:flex;gap:9px;">
+        <button class="btn-hdr-sm" style="padding:8px 13px;font-size:0.63rem;" onclick="limpiarPerfil()" id="btn-clear-profile">Clear profile</button>
+        <button class="btn-guardar-pf" onclick="guardarPerfil()" id="btn-save-profile">Save &amp; Continue →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SCREEN 3 — GENERATOR
+══════════════════════════════════════ -->
+<div id="screen-gen" class="screen">
+  <div class="gen-header">
+    <div class="gen-marca">
+      <div class="gen-titulo">BRB Study Generator <em>US</em></div>
+      <div class="gen-sub">BRB Estrategia &amp; Procesos · Soberanía Técnica Ediciones · Grades 9–12</div>
+    </div>
+    <div class="gen-right">
+      <span class="consultas-badge" id="consultas-badge" style="display:none;"></span>
+      <span class="est-badge" id="est-badge"></span>
+      <button class="btn-hdr-sm accent" onclick="irAPerfil()" id="btn-go-profile">⚙ Profile</button>
+      <button class="btn-hdr-sm" onclick="cerrarSesion()" id="btn-logout">Sign out</button>
+    </div>
+  </div>
+
+  <div class="gen-layout">
+    <!-- LEFT PANEL -->
+    <div>
+      <!-- PANEL 1: WHAT TO STUDY -->
+      <div class="panel" style="margin-bottom:14px;">
+        <div class="panel-hdr"><div class="panel-num">1</div><div class="panel-tit" id="panel1-tit">What do you want to study?</div></div>
+        <div class="panel-body">
+          <div class="campo">
+            <label id="lbl-subject-gen">Subject</label>
+            <select id="g-materia" onchange="actualizarSugTemas()">
+              <option value="">— Select subject —</option>
+            </select>
+            <input type="text" id="g-materia-manual" placeholder="Or type the subject..." style="margin-top:5px;display:none;">
+          </div>
+          <div class="campo">
+            <label id="lbl-topic">Specific Topic</label>
+            <input type="text" id="g-tema" placeholder="e.g. Photosynthesis, Civil War, Quadratic equations...">
+            <div id="cont-sug-wrap" style="display:none;margin-top:5px;">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:0.57rem;color:var(--text-light);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;" id="lbl-suggested">Suggested topics:</div>
+              <div class="chips-sug" id="cont-chips"></div>
+            </div>
+          </div>
+          <div class="campo">
+            <label id="lbl-context-gen">Additional context <span class="op">(specific question, doubt, or section of your notes)</span></label>
+            <textarea id="g-contexto" rows="2" placeholder="e.g. I don't understand why pH changes at the equivalence point..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL 2: OUTPUT LANGUAGE -->
+      <div class="panel" style="margin-bottom:14px;">
+        <div class="panel-hdr"><div class="panel-num">2</div><div class="panel-tit" id="panel2-tit">Study Output Language</div></div>
+        <div class="panel-body">
+          <div class="outlang-grid three" id="outlang-grid">
+            <div class="outlang-btn activo" onclick="selOutLang('bilingual',this)" id="ol-bilingual">
+              <span class="ol-ico">🌎</span>
+              <span class="ol-nom" id="ol-bil-nom">Spanish + English Terms</span>
+              <span class="ol-desc" id="ol-bil-desc">Explanation in Spanish, academic terms in English</span>
+            </div>
+            <div class="outlang-btn" onclick="selOutLang('en',this)" id="ol-en">
+              <span class="ol-ico">🇺🇸</span>
+              <span class="ol-nom">Full English</span>
+              <span class="ol-desc" id="ol-en-desc">ELL-scaffolded academic English</span>
+            </div>
+            <div class="outlang-btn" onclick="selOutLang('es',this)" id="ol-es">
+              <span class="ol-ico">🇲🇽</span>
+              <span class="ol-nom">Full Spanish</span>
+              <span class="ol-desc" id="ol-es-desc">Home review mode</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL 3: HOW TO STUDY -->
+      <div class="panel" style="margin-bottom:14px;">
+        <div class="panel-hdr"><div class="panel-num">3</div><div class="panel-tit" id="panel3-tit">How do you want to study?</div></div>
+        <div class="panel-body">
+          <div class="sep-tit" id="sep-material-type">Study material type</div>
+          <div class="tipo-grid" id="tipo-grid">
+            <div class="tipo-item activo" onclick="selTipo(this,'summary')">
+              <div class="ti-ico">📝</div>
+              <span class="ti-nom" id="tipo-summary">Summary</span>
+              <span class="ti-desc" id="tdesc-summary">Structured</span>
+            </div>
+            <div class="tipo-item" onclick="selTipo(this,'explanation')">
+              <div class="ti-ico">💡</div>
+              <span class="ti-nom" id="tipo-explanation">Explanation</span>
+              <span class="ti-desc" id="tdesc-explanation">Step by step</span>
+            </div>
+            <div class="tipo-item" onclick="selTipo(this,'practice')">
+              <div class="ti-ico">✏️</div>
+              <span class="ti-nom" id="tipo-practice">Practice</span>
+              <span class="ti-desc" id="tdesc-practice">Questions</span>
+            </div>
+            <div class="tipo-item" onclick="selTipo(this,'oral')">
+              <div class="ti-ico">🎤</div>
+              <span class="ti-nom" id="tipo-oral">Oral Exam</span>
+              <span class="ti-desc" id="tdesc-oral">Q&amp;A format</span>
+            </div>
+            <div class="tipo-item" onclick="selTipo(this,'concept')">
+              <div class="ti-ico">🔍</div>
+              <span class="ti-nom" id="tipo-concept">Concept</span>
+              <span class="ti-desc" id="tdesc-concept">Simple explanation</span>
+            </div>
+            <div class="tipo-item" onclick="selTipo(this,'project')">
+              <div class="ti-ico">📋</div>
+              <span class="ti-nom" id="tipo-project">Project / PBL</span>
+              <span class="ti-desc" id="tdesc-project">Guided structure</span>
+            </div>
+            <div class="tipo-item" onclick="selTipo(this,'mindmap')">
+              <div class="ti-ico">🗺️</div>
+              <span class="ti-nom" id="tipo-mindmap">Mind Map</span>
+              <span class="ti-desc" id="tdesc-mindmap">Hierarchy outline</span>
+            </div>
+            <div class="tipo-item" onclick="selTipo(this,'flashcards')">
+              <div class="ti-ico">🃏</div>
+              <span class="ti-nom" id="tipo-flashcards">Flashcards</span>
+              <span class="ti-desc" id="tdesc-flashcards">Q / A pairs</span>
+            </div>
+          </div>
+          <div class="sub-prac" id="sub-prac">
+            <div class="sub-prac-tit" id="sub-prac-tit">Question types to include:</div>
+            <div class="sub-prac-grid">
+              <span class="sub-chip activo" onclick="toggleChip(this)">Multiple choice</span>
+              <span class="sub-chip" onclick="toggleChip(this)">True / False</span>
+              <span class="sub-chip" onclick="toggleChip(this)">Short answer</span>
+              <span class="sub-chip" onclick="toggleChip(this)">Problem solving</span>
+              <span class="sub-chip" onclick="toggleChip(this)">Fill in the blank</span>
+              <span class="sub-chip" onclick="toggleChip(this)">Match columns</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL 4: OPTIONS -->
+      <div class="panel" style="margin-bottom:14px;">
+        <div class="panel-hdr"><div class="panel-num">4</div><div class="panel-tit" id="panel4-tit">Options</div></div>
+        <div class="panel-body">
+          <!-- FILE ATTACH -->
+          <div class="sep-tit" id="sep-attach">Attach notes or material <span style="font-weight:400;color:var(--text-light);">(PDF or Word)</span></div>
+          <div class="adj-zona" id="adj-zona" onclick="document.getElementById('adj-input').click()"
+            ondragover="event.preventDefault();this.classList.add('dragover')"
+            ondragleave="this.classList.remove('dragover')"
+            ondrop="handleDrop(event)">
+            <input type="file" id="adj-input" accept=".pdf,.doc,.docx" onchange="handleFile(event)">
+            <div class="adj-ico">📎</div>
+            <div class="adj-txt">Tap to attach your <strong>class notes or textbook pages</strong><br><small>The generator will use it as the study base</small></div>
+          </div>
+          <div class="adj-info" id="adj-info">
+            <span id="adj-nombre"></span>
+            <button class="adj-quit" onclick="quitarAdj()">✕</button>
+          </div>
+
+          <!-- SAVI TOGGLE -->
+          <div class="sep-tit" style="margin-top:13px;" id="sep-savi">🛡️ SAVI Protocol — Bibliographic Review (recommended)</div>
+          <div class="savi-toggle-row" id="savi-toggle-row" onclick="toggleSavi()">
+            <span class="savi-toggle-label">🛡️ <span id="savi-toggle-label-txt">Run AI bibliographic verification (SAVI)</span></span>
+            <span class="savi-badge on" id="savi-badge">ON ✓</span>
+          </div>
+
+          <!-- ANALOGIES TOGGLE -->
+          <div class="sep-tit" style="margin-top:10px;" id="sep-ana">🔗 Pedagogical Analogies</div>
+          <div class="savi-toggle-row" id="ana-toggle-row" onclick="toggleAnalogias()" style="border-color:rgba(200,155,42,0.4);">
+            <span class="savi-toggle-label">🔗 <span id="ana-toggle-label-txt">Generate 3 teaching analogies (everyday, contextual, visual)</span></span>
+            <span class="savi-badge off" id="ana-badge">OFF</span>
+          </div>
+
+          <!-- YOUTUBE TOGGLE -->
+          <div class="sep-tit" style="margin-top:10px;" id="sep-yt">YouTube video suggestions</div>
+          <div class="yt-toggle-row" id="yt-toggle-row" onclick="toggleYT()">
+            <span style="font-size:0.79rem;font-weight:600;color:var(--navy);display:flex;align-items:center;gap:7px;" id="yt-label">▶️ <span id="yt-label-txt">Search related YouTube videos</span></span>
+            <span class="sub-chip" id="yt-badge" style="border-radius:3px;padding:2px 8px;">OFF</span>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-generar" id="btn-generar" onclick="generarEstudio()">
+        <span id="btn-texto">⚡ Generate Study Material</span>
+      </button>
+    </div>
+
+    <!-- RIGHT PANEL — RESULT -->
+    <div class="panel">
+      <div class="res-header">
+        <span class="res-titulo" id="res-titulo">Study Material</span>
+        <div class="res-acciones">
+          <button class="btn-acc btn-copiar" id="btnCopiar" onclick="copiarTexto()" disabled id="btn-copy-txt">📋 Copy</button>
+          <button class="btn-acc btn-descargar" id="btnDescargar" onclick="descargarTexto()" disabled>⬇ .txt</button>
+          <button class="btn-acc btn-limpiar" id="btnLimpiar" onclick="limpiarOutput()" disabled>✕ Clear</button>
+        </div>
+      </div>
+      <div class="res-tabs">
+        <button class="rtab activo" id="rtab-material" onclick="cambiarTab('material')">Material</button>
+        <button class="rtab" id="rtab-chat" onclick="cambiarTab('chat')">💬 Chat AI</button>
+        <button class="rtab" id="rtab-savi" onclick="cambiarTab('savi')">🛡️ SAVI</button>
+        <button class="rtab" id="rtab-analogias" onclick="cambiarTab('analogias')">🔗 Analogies</button>
+        <button class="rtab" id="rtab-yt" onclick="cambiarTab('yt')">▶️ YouTube</button>
+        <button class="rtab" id="rtab-hist" onclick="cambiarTab('hist')">📚 History</button>
+        <button class="rtab" id="rtab-docente" onclick="cambiarTab('docente')">🔗 Teacher Code</button>
+      </div>
+      <div class="voz-bar" id="vozBar">
+        <div class="voz-row1">
+          <button class="btn-voz btn-voz-prev" id="btnAnterior" onclick="vozSeccionAnterior()" disabled>◀◀</button>
+          <button class="btn-voz btn-voz-play" id="btnEscuchar" onclick="vozEscuchar()" disabled>▶ Listen</button>
+          <button class="btn-voz btn-voz-pause" id="btnPausar" onclick="vozPausar()" style="display:none;">⏸ Pause</button>
+          <button class="btn-voz btn-voz-pause" id="btnContinuar" onclick="vozContinuar()" style="display:none;">▶ Resume</button>
+          <button class="btn-voz btn-voz-stop" id="btnDetener" onclick="vozDetener()" disabled>⏹ Stop</button>
+          <button class="btn-voz btn-voz-next" id="btnSiguiente" onclick="vozSeccionSiguiente()" disabled>▶▶</button>
+        </div>
+        <div class="voz-row2">
+          <span class="voz-prog" id="vozProg"></span>
+          <div class="voz-speed">
+            <span class="voz-speed-lbl">Speed</span>
+            <select id="vozVel"><option value="0.7">Slow</option><option value="1.0" selected>Normal</option><option value="1.4">Fast</option></select>
+          </div>
+        </div>
+      </div>
+      <div class="estado-bar">
+        <div class="estado-dot" id="estadoDot"></div>
+        <span id="estadoTexto">Waiting</span>
+        <span style="margin-left:auto;opacity:0.6;font-size:0.55rem;" id="tokensInfo"></span>
+      </div>
+      <div class="res-body">
+
+        <!-- TAB: MATERIAL -->
+        <div id="tab-material">
+          <div class="placeholder" id="placeholder">
+            <div class="ph-ico">📚</div>
+            <div class="ph-txt" id="ph-txt">Fill in the form and generate your personalized study material.</div>
+          </div>
+          <div class="loading-r" id="loading">
+            <div class="spinner"></div>
+            <div class="loading-txt" id="loading-txt">Generating your material...</div>
+          </div>
+          <div class="error-msg" id="errorMsg"></div>
+          <pre id="resultado-texto"></pre>
+        </div>
+
+        <!-- TAB: CHAT -->
+        <div id="tab-chat" style="display:none;padding-top:4px;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.60rem;color:var(--navy);margin-bottom:8px;padding:7px 10px;background:var(--navy-light);border-radius:var(--radius);line-height:1.5;" id="chat-info-txt">
+            💬 Generate your material first, then ask questions. Each message uses one API call.
+          </div>
+          <div class="chat-msgs" id="chat-msgs">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:0.63rem;color:var(--text-light);text-align:center;padding:20px;" id="chat-placeholder-txt">Generate your material first, then ask me anything about the topic.</div>
+          </div>
+          <div class="chat-input-row">
+            <input type="text" id="chat-input" placeholder="Ask something about the topic..." onkeydown="if(event.key==='Enter') enviarChat()">
+            <button class="btn-chat-send" id="btn-chat" onclick="enviarChat()" disabled>Send</button>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;color:var(--text-light);text-align:center;margin-top:5px;" id="chat-note-txt">⚠ Each question uses one API call · Chat does not count toward the 10 daily generations</div>
+        </div>
+
+        <!-- TAB: SAVI — AI GENERATED -->
+        <div id="tab-savi" style="display:none;padding-top:4px;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.60rem;color:var(--navy);margin-bottom:8px;padding:7px 10px;background:var(--navy-light);border-radius:var(--radius);line-height:1.5;">
+            🛡️ <span id="savi-tab-info">SAVI generates verified bibliographic references and a critical review of the AI output. Activate the toggle in Options and generate.</span>
+          </div>
+          <div id="savi-loading" style="display:none;text-align:center;padding:30px;font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text-light);">
+            <div class="spinner" style="margin:0 auto 10px;"></div>
+            <span id="savi-loading-txt">Running SAVI protocol...</span>
+          </div>
+          <pre id="savi-resultado" style="display:none;font-family:'JetBrains Mono',monospace;font-size:0.72rem;line-height:1.80;color:var(--text);white-space:pre-wrap;word-break:break-word;background:#f5f0fa;border:1.5px solid rgba(91,45,142,0.2);border-radius:var(--radius);padding:13px;max-height:560px;overflow-y:auto;"></pre>
+          <div id="savi-empty" style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text-light);text-align:center;padding:40px 20px;opacity:0.6;">
+            <div style="font-size:2rem;margin-bottom:8px;">🛡️</div>
+            <span id="savi-empty-txt">Generate material with SAVI enabled to see the bibliographic review here.</span>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;color:var(--text-light);text-align:center;margin-top:8px;line-height:1.6;" id="savi-note-txt">
+            SAVI Protocol · BRB Educa · Aligned with SIFT Method (Stanford) and CRAAP Test — US High School media literacy standards
+          </div>
+        </div>
+
+        <!-- TAB: ANALOGIES — AI GENERATED -->
+        <div id="tab-analogias" style="display:none;padding-top:4px;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.60rem;color:var(--navy);margin-bottom:8px;padding:7px 10px;background:var(--gold-light);border:1px solid rgba(200,155,42,0.3);border-radius:var(--radius);line-height:1.5;">
+            🔗 <span id="ana-tab-info">3 pedagogical analogies generated by AI: everyday, contextual, and visual. Activate the toggle in Options and generate.</span>
+          </div>
+          <div id="ana-loading" style="display:none;text-align:center;padding:30px;font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text-light);">
+            <div class="spinner" style="margin:0 auto 10px;"></div>
+            <span id="ana-loading-txt">Generating pedagogical analogies...</span>
+          </div>
+          <pre id="analogias-resultado" style="display:none;font-family:'JetBrains Mono',monospace;font-size:0.72rem;line-height:1.80;color:var(--text);white-space:pre-wrap;word-break:break-word;background:#fffbf2;border:1.5px solid rgba(200,155,42,0.25);border-radius:var(--radius);padding:13px;max-height:560px;overflow-y:auto;"></pre>
+          <div id="ana-empty" style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text-light);text-align:center;padding:40px 20px;opacity:0.6;">
+            <div style="font-size:2rem;margin-bottom:8px;">🔗</div>
+            <span id="ana-empty-txt">Generate material with Analogies enabled to see them here.</span>
+          </div>
+        </div>
+
+        <!-- TAB: YOUTUBE -->
+        <div id="tab-yt" style="display:none;padding-top:4px;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.60rem;color:#c0391b;margin-bottom:10px;padding:7px 10px;background:#fff3ee;border:1px solid rgba(192,57,27,0.2);border-radius:var(--radius);line-height:1.5;" id="yt-info-txt">
+            ▶️ Video suggestions are generated automatically when you create material with YouTube enabled.
+          </div>
+          <div id="yt-contenido">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text-light);text-align:center;padding:30px 20px;opacity:0.6;" id="yt-empty-txt">Generate material with YouTube enabled to see suggestions here.</div>
+          </div>
+        </div>
+
+        <!-- TAB: HISTORY -->
+        <div id="tab-hist" style="display:none;padding-top:4px;">
+          <div class="hist-blq visible" id="histBlq" style="display:block;">
+            <div class="hist-tit">
+              <span id="hist-title-txt">📚 Saved Study Sessions</span>
+              <button class="btn-limpiar-hist" onclick="limpiarHistorial()" id="btn-clear-hist">Clear all</button>
+            </div>
+            <div class="hist-lista" id="histLista">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:0.63rem;color:var(--text-light);text-align:center;padding:20px;" id="hist-empty-txt">No sessions saved yet.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: TEACHER CODE -->
+        <div id="tab-docente" style="display:none;">
+          <div class="coming-soon-box">
+            <div class="cs-ico">🔗</div>
+            <div class="cs-title" id="cs-title">Teacher Code</div>
+            <div class="cs-desc" id="cs-desc">This feature connects student study material directly to content generated by your teacher using the BRB Class Generator US. Enter your teacher's code to load the exact class content and generate personalized study material from it.</div>
+            <div class="cs-badge" id="cs-badge">Coming soon — BRB Class Generator US</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <strong>BRB Estrategia &amp; Procesos · Soberanía Técnica Ediciones</strong><br>
+    Boris Rodríguez Barrera · ORCID: 0009-0004-6583-6439 · Puerto Madryn, Chubut, Argentina<br>
+    bbbarrera1986@gmail.com · +54 297 517-6351<br>
+    <span style="opacity:0.4;">BRB Study Generator US v1.0 · High School Grades 9–12 · 2026 · AI-powered educational tool — Always verify with your teacher</span>
+    <div class="std-row">
+      <span class="std-pill">CCSS — Common Core State Standards</span>
+      <span class="std-pill">NGSS — Next Generation Science Standards</span>
+      <span class="std-pill">C3 Framework — Social Studies</span>
+      <span class="std-pill">ESSA 2015</span>
+      <span class="std-pill">ELL Support</span>
+    </div>
+  </footer>
+</div>
+
+<button id="fab-errores" onclick="abrirModalErrores()"
+  style="position:fixed;bottom:1.5rem;left:1.5rem;z-index:8000;width:40px;height:40px;border-radius:50%;background:var(--gold);color:white;border:none;font-size:1rem;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.22);display:none;align-items:center;justify-content:center;"
+  title="Help / Ayuda">⚠</button>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  ⚙ BYPASS MODE — false = PRODUCTION / true = LOCAL TEST
+// ══════════════════════════════════════════════════════
+const BYPASS_MODE = false;
+const BYPASS_USER = { email: 'test@brb.us', nombre: 'Test Student' };
+
+// ══ STORAGE WRAPPER ══
+const _store = (() => {
+  try { localStorage.setItem('_t','1'); localStorage.removeItem('_t'); return localStorage; }
+  catch(e) { try { sessionStorage.setItem('_t','1'); sessionStorage.removeItem('_t'); return sessionStorage; }
+  catch(e2) { const m={}; return { getItem:k=>m[k]??null, setItem:(k,v)=>{m[k]=String(v);}, removeItem:k=>{delete m[k];} }; } }
+})();
+
+// ══ SUPABASE CONFIG (Proyecto Inclusión — blhwmrxzldymasnwbeaq)
+// ══ KEY: Supabase → Project Settings → API → anon public (starts with eyJ...)
+const SUPA_URL  = 'https://blhwmrxzldymasnwbeaq.supabase.co';
+const SUPA_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJsaHdtcnh6bGR5bWFzbndiZWFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NTgzODcsImV4cCI6MjA5MjQzNDM4N30.Cc36kFQfRs5X23h5Ioa0kdd4L1nqBx--Btj5PQ2-BYc'; // anon public — BRB-Inclusión
+const HERRAMIENTA = 'brb_study_us';
+
+// ══ GLOBAL STATE ══
+let provActual      = 'gemini';
+let apiKeyGuardada  = '';
+let sesionActiva    = null;
+let perfilEst       = null;
+let studentType     = 'ell';
+let uiLang          = 'en';
+let gradeActual     = 'grade10';
+let tipoEstudio     = 'summary';
+let outputLang      = 'bilingual';
+let ytActivo        = false;
+let saviActivo      = true;
+let analogiasActivo = false;
+let adjTexto        = '';
+let adjNombre       = '';
+let tabActual       = 'material';
+let chatHistorial   = [];
+let textoGenerado   = '';
+let saviGenerado    = '';
+let analogiasGenerado = '';
+let pfMaterias      = [];
+let vozSecciones    = [];
+let vozSeccionActual = 0;
+let vozPausado      = false;
+let vozUtterance    = null;
+
+// ══ CURRICULA US ══
+const CURRICULA_US = {
+  grade9: {
+    label: '9th Grade', age: '14–15 yrs',
+    core: [
+      {name:'English I', std:'CCSS ELA'},
+      {name:'Algebra I / Geometry', std:'CCSS Math'},
+      {name:'Biology', std:'NGSS'},
+      {name:'World History / Geography', std:'C3 Framework'},
+      {name:'Physical Education', std:''}
+    ],
+    electives: ['Spanish I','Art','Health','Computer Science','Music','Drama','CTE Introduction']
+  },
+  grade10: {
+    label: '10th Grade', age: '15–16 yrs',
+    core: [
+      {name:'English II', std:'CCSS ELA'},
+      {name:'Geometry / Algebra II', std:'CCSS Math'},
+      {name:'Chemistry / Earth Science', std:'NGSS'},
+      {name:'US History / World History', std:'C3 Framework'},
+      {name:'Physical Education', std:''}
+    ],
+    electives: ['Spanish II','Art','Health','Computer Science','Music','Career Tech Education','Psychology']
+  },
+  grade11: {
+    label: '11th Grade', age: '16–17 yrs',
+    core: [
+      {name:'English III', std:'CCSS ELA'},
+      {name:'Algebra II / Pre-Calculus', std:'CCSS Math'},
+      {name:'Physics / Chemistry', std:'NGSS'},
+      {name:'US History', std:'C3 Framework'}
+    ],
+    electives: ['AP English Language','AP Biology','AP US History','AP Chemistry','Spanish III','Computer Science','Dual Enrollment','CTE']
+  },
+  grade12: {
+    label: '12th Grade', age: '17–18 yrs',
+    core: [
+      {name:'English IV', std:'CCSS ELA'},
+      {name:'Pre-Calculus / Calculus', std:'CCSS Math'},
+      {name:'Science Elective', std:'NGSS'},
+      {name:'Government / Economics', std:'C3 Framework'}
+    ],
+    electives: ['AP Calculus','AP Government','AP Psychology','AP Environmental Science','AP Literature','Dual Enrollment','Computer Science AP','Spanish IV']
+  }
+};
+
+// ══ TOPIC SUGGESTIONS ══
+const TOPICS_BY_SUBJECT = {
+  'English I':['Elements of fiction','Point of view','Literary devices','Argument writing','Text analysis','Grammar fundamentals'],
+  'English II':['Argumentative essay structure','Rhetoric and persuasion','Shakespearean drama','World literature themes','Research writing'],
+  'English III':['American literature','Synthesis essay','AP Language skills','Rhetorical analysis','Non-fiction texts'],
+  'English IV':['British literature','College application essay','AP Literature analysis','Satire and irony'],
+  'Algebra I / Geometry':['Linear equations','Systems of equations','Pythagorean theorem','Area and volume','Factoring polynomials'],
+  'Geometry / Algebra II':['Triangle congruence','Quadratic functions','Logarithms','Trigonometry basics','Geometric proofs'],
+  'Algebra II / Pre-Calculus':['Exponential and logarithmic functions','Polynomial functions','Trigonometry','Sequences and series','Limits introduction'],
+  'Pre-Calculus / Calculus':['Limits and continuity','Derivatives','Integration basics','Chain rule','Related rates'],
+  'Biology':['Cell structure and function','DNA and protein synthesis','Genetics and heredity','Ecosystems','Natural selection and evolution'],
+  'Chemistry / Earth Science':['Periodic table','Chemical bonding','Balancing equations','Stoichiometry','Acid-base chemistry','Rock cycle'],
+  'Physics / Chemistry':['Newton\'s laws of motion','Energy and work','Thermodynamics','Waves and sound','Electric circuits'],
+  'Science Elective':['Climate change science','Ecology','Biotechnology','Environmental chemistry'],
+  'World History / Geography':['Ancient civilizations','Industrial Revolution','World War I','World War II','Cold War','Decolonization'],
+  'US History / World History':['American Revolution','Civil War and Reconstruction','Progressive Era','Great Depression','Civil Rights Movement'],
+  'US History':['Founding documents','Westward expansion','Immigration waves','New Deal','Vietnam War','Civil Rights Movement'],
+  'Government / Economics':['Constitutional principles','Branches of government','Supply and demand','GDP and economic indicators','Federal Reserve','Voting and civic participation'],
+};
+
+// ══ UI TRANSLATIONS ══
+const T = {
+  en: {
+    apiTitle: 'Select your AI assistant',
+    apiDesc: 'Choose a provider and get your API key. The key is never stored — only used in this session.',
+    apiBtn: 'Continue →',
+    lblApiKey: 'Your API Key',
+    loginTit: 'Enter your license',
+    loginDesc: 'Enter your email and license key to access the platform.',
+    lblEmail: 'Email',
+    lblClave: 'License Key',
+    lblBirth: 'Year of Birth',
+    ageNote: 'Platform for students aged 14–18 · High School Grades 9–12',
+    loginBtnTxt: 'Access Platform →',
+    pfHeroDesc: 'Set it up once. The generator uses your information to personalize study material by grade, subject, and context. You can edit it anytime.',
+    lblLangPlatform: 'Platform Language',
+    langNote: 'Changing the language updates all interface labels.',
+    lblStudentType: 'Student Type',
+    stEllNom: 'ELL — Hispanic Spanish Speaker',
+    stEllDesc: 'Spanish is your home language. You study academic content in English and want support in both languages.',
+    stNativeNom: 'English-Native / Fluent',
+    stNativeDesc: 'English is your primary academic language. You want study material in English.',
+    lblPersonal: 'Personal Information',
+    lblName: 'Name (optional)',
+    lblState: 'State',
+    lblCity: 'City / District',
+    lblGradeSection: 'Grade Level',
+    lblSubjects: 'My Subjects',
+    lblCoreSug: 'Core subjects (click to add):',
+    lblElecSug: 'Electives / AP (click to add):',
+    lblInterests: 'Interests & Context',
+    lblIntLabel: 'What are your interests? (AI uses them for examples)',
+    lblCtx: 'Anything else the AI should know? (optional)',
+    btnSkip: 'Complete later →',
+    btnClearProfile: 'Clear profile',
+    btnSaveProfile: 'Save & Continue →',
+    pfSaved: '✓ Profile saved',
+    panel1Tit: 'What do you want to study?',
+    panel2Tit: 'Study Output Language',
+    panel3Tit: 'How do you want to study?',
+    panel4Tit: 'Options',
+    lblSubjectGen: 'Subject',
+    lblTopic: 'Specific Topic',
+    lblContextGen: 'Additional context (specific question, doubt, or section of your notes)',
+    lblSuggested: 'Suggested topics:',
+    olBilNom: 'Spanish + English Terms',
+    olBilDesc: 'Explanation in Spanish, academic terms in English',
+    olEnDesc: 'ELL-scaffolded academic English',
+    olEsDesc: 'Home review mode',
+    sepMaterialType: 'Study material type',
+    tipoSummary: 'Summary', tdescSummary: 'Structured',
+    tipoExplanation: 'Explanation', tdescExplanation: 'Step by step',
+    tipoPractice: 'Practice', tdescPractice: 'Questions',
+    tipoOral: 'Oral Exam', tdescOral: 'Q&A format',
+    tipoConcept: 'Concept', tdescConcept: 'Simple explanation',
+    tipoProject: 'Project / PBL', tdescProject: 'Guided structure',
+    tipoMindmap: 'Mind Map', tdescMindmap: 'Hierarchy outline',
+    tipoFlashcards: 'Flashcards', tdescFlashcards: 'Q / A pairs',
+    subPracTit: 'Question types to include:',
+    sepAttach: 'Attach notes or material (PDF or Word)',
+    sepSavi: 'SAVI Protocol (recommended)',
+    saviToggleLbl: 'Show SAVI source verification guide',
+    sepYt: 'YouTube video suggestions',
+    ytLabelTxt: 'Search related YouTube videos',
+    btnGenerar: '⚡ Generate Study Material',
+    resTitulo: 'Study Material',
+    btnCopyTxt: '📋 Copy',
+    chatInfoTxt: '💬 Generate your material first, then ask questions. Each message uses one API call.',
+    chatPlaceholder: 'Ask something about the topic...',
+    chatNoteTxt: '⚠ Each question uses one API call · Chat does not count toward the 10 daily generations',
+    chatEmptyTxt: 'Generate your material first, then ask me anything about the topic.',
+    ytInfoTxt: '▶️ Video suggestions are generated automatically when you create material with YouTube enabled.',
+    ytEmptyTxt: 'Generate material with YouTube enabled to see suggestions here.',
+    histTitleTxt: '📚 Saved Study Sessions',
+    btnClearHist: 'Clear all',
+    histEmptyTxt: 'No sessions saved yet.',
+    csTitle: 'Teacher Code',
+    csDesc: 'This feature connects student study material directly to content generated by your teacher using the BRB Class Generator US. Enter your teacher\'s code to load the exact class content and generate personalized study material from it.',
+    csBadge: 'Coming soon — BRB Class Generator US',
+    phTxt: 'Fill in the form and generate your personalized study material.',
+    loadingTxt: 'Generating your material...',
+    btnGoProfile: '⚙ Profile',
+    btnLogout: 'Sign out',
+    saviTitle: 'SAVI Protocol — Bibliographic Review',
+    saviSub: 'AI generates probable text, not guaranteed truth. Always verify with your textbook.',
+    stateLbl: '— Select state —',
+    cityPlaceholder: 'e.g. Houston, TX...',
+    namePlaceholder: 'Your name...',
+    topicPlaceholder: 'e.g. Photosynthesis, Civil War, Quadratic equations...',
+    contextPlaceholder: 'e.g. I don\'t understand why pH changes at the equivalence point...',
+    addSubjectPlaceholder: 'Add a subject...',
+    btnAddMat: '+ Add',
+    vozListen: '▶ Listen', vozPause: '⏸ Pause', vozResume: '▶ Resume', vozStop: '⏹ Stop',
+    vozSpeed: 'Speed', vozSlow: 'Slow', vozNormal: 'Normal', vozFast: 'Fast',
+    waiting: 'Waiting',
+    generationsLeft: 'generations left today',
+    limitReached: 'Daily limit reached',
+    bypass: '✓ TEST MODE — No license required',
+  },
+  es: {
+    apiTitle: 'Seleccioná tu asistente de IA',
+    apiDesc: 'Elegí un proveedor y obtené tu API Key. La clave no se almacena — solo se usa en esta sesión.',
+    apiBtn: 'Continuar →',
+    lblApiKey: 'Tu API Key',
+    loginTit: 'Ingresá con tu licencia',
+    loginDesc: 'Ingresá tu email y clave de licencia para acceder a la plataforma.',
+    lblEmail: 'Email',
+    lblClave: 'Clave de licencia',
+    lblBirth: 'Año de nacimiento',
+    ageNote: 'Plataforma para estudiantes de 14–18 años · High School Grados 9–12',
+    loginBtnTxt: 'Acceder →',
+    pfHeroDesc: 'Configuralo una vez. El generador usa tus datos para personalizar el material según grado, materia y contexto. Podés editarlo cuando quieras.',
+    lblLangPlatform: 'Idioma de la plataforma',
+    langNote: 'Cambiar el idioma actualiza todos los labels de la interfaz.',
+    lblStudentType: 'Tipo de estudiante',
+    stEllNom: 'ELL — Hispanohablante',
+    stEllDesc: 'El español es tu idioma hogar. Estudiás contenido académico en inglés y querés apoyo en ambos idiomas.',
+    stNativeNom: 'Anglófono / Fluido en inglés',
+    stNativeDesc: 'El inglés es tu idioma académico principal. Querés material de estudio en inglés.',
+    lblPersonal: 'Información personal',
+    lblName: 'Nombre (opcional)',
+    lblState: 'Estado',
+    lblCity: 'Ciudad / Distrito',
+    lblGradeSection: 'Grado escolar',
+    lblSubjects: 'Mis materias',
+    lblCoreSug: 'Materias obligatorias (clic para agregar):',
+    lblElecSug: 'Electivas / AP (clic para agregar):',
+    lblInterests: 'Intereses y contexto',
+    lblIntLabel: '¿Qué te interesa? (la IA usa ejemplos relacionados)',
+    lblCtx: '¿Algo más que el asistente deba saber? (opcional)',
+    btnSkip: 'Completar después →',
+    btnClearProfile: 'Borrar perfil',
+    btnSaveProfile: 'Guardar y continuar →',
+    pfSaved: '✓ Perfil guardado',
+    panel1Tit: '¿Qué querés estudiar?',
+    panel2Tit: 'Idioma del material generado',
+    panel3Tit: '¿Cómo querés estudiar?',
+    panel4Tit: 'Opciones',
+    lblSubjectGen: 'Materia',
+    lblTopic: 'Tema específico',
+    lblContextGen: 'Contexto adicional (pregunta específica, duda o sección de tus apuntes)',
+    lblSuggested: 'Temas sugeridos:',
+    olBilNom: 'Español + términos en inglés',
+    olBilDesc: 'Explicación en español, términos académicos en inglés',
+    olEnDesc: 'Inglés académico con scaffolding ELL',
+    olEsDesc: 'Modo repaso en casa',
+    sepMaterialType: 'Tipo de material de estudio',
+    tipoSummary: 'Resumen', tdescSummary: 'Estructurado',
+    tipoExplanation: 'Explicación', tdescExplanation: 'Paso a paso',
+    tipoPractice: 'Práctica', tdescPractice: 'Preguntas',
+    tipoOral: 'Examen Oral', tdescOral: 'Formato P&R',
+    tipoConcept: 'Concepto', tdescConcept: 'Explicación simple',
+    tipoProject: 'Proyecto / PBL', tdescProject: 'Guía estructurada',
+    tipoMindmap: 'Mapa Mental', tdescMindmap: 'Esquema jerárquico',
+    tipoFlashcards: 'Flashcards', tdescFlashcards: 'Pregunta / Respuesta',
+    subPracTit: 'Tipos de preguntas a incluir:',
+    sepAttach: 'Adjuntar apuntes o material (PDF o Word)',
+    sepSavi: 'Protocolo SAVI (recomendado)',
+    saviToggleLbl: 'Mostrar guía de verificación SAVI',
+    sepYt: 'Sugerencias de videos YouTube',
+    ytLabelTxt: 'Buscar videos relacionados en YouTube',
+    btnGenerar: '⚡ Generar material de estudio',
+    resTitulo: 'Material de Estudio',
+    btnCopyTxt: '📋 Copiar',
+    chatInfoTxt: '💬 Generá tu material primero, luego hacé preguntas. Cada mensaje usa una llamada a la API.',
+    chatPlaceholder: 'Preguntá algo sobre el tema...',
+    chatNoteTxt: '⚠ Cada pregunta usa una llamada a la API · El chat no cuenta en las 10 generaciones diarias',
+    chatEmptyTxt: 'Generá tu material primero y luego preguntame lo que quieras sobre el tema.',
+    ytInfoTxt: '▶️ Las sugerencias de video se generan automáticamente al crear material con YouTube activado.',
+    ytEmptyTxt: 'Generá material con YouTube activado para ver las sugerencias aquí.',
+    histTitleTxt: '📚 Sesiones de estudio guardadas',
+    btnClearHist: 'Borrar todo',
+    histEmptyTxt: 'No hay sesiones guardadas.',
+    csTitle: 'Código Docente',
+    csDesc: 'Esta función conecta el material de estudio del estudiante directamente con el contenido generado por tu docente en el Generador de Clases BRB US. Ingresá el código de tu docente para cargar el contenido de la clase y generar material personalizado.',
+    csBadge: 'Próximamente — BRB Class Generator US',
+    phTxt: 'Completá el formulario y generá tu material de estudio personalizado.',
+    loadingTxt: 'Generando tu material...',
+    btnGoProfile: '⚙ Perfil',
+    btnLogout: 'Salir',
+    saviTitle: 'Protocolo SAVI — Revisión Bibliográfica',
+    saviSub: 'La IA genera texto probable, no verdad garantizada. Siempre verificá con tu libro.',
+    stateLbl: '— Seleccioná estado —',
+    cityPlaceholder: 'Ej: Miami, FL...',
+    namePlaceholder: 'Tu nombre...',
+    topicPlaceholder: 'Ej: Fotosíntesis, Guerra Civil, Ecuaciones cuadráticas...',
+    contextPlaceholder: 'Ej: No entiendo por qué cambia el pH en el punto de equivalencia...',
+    addSubjectPlaceholder: 'Agregar materia...',
+    btnAddMat: '+ Agregar',
+    vozListen: '▶ Escuchar', vozPause: '⏸ Pausar', vozResume: '▶ Continuar', vozStop: '⏹ Detener',
+    vozSpeed: 'Vel.', vozSlow: 'Lento', vozNormal: 'Normal', vozFast: 'Rápido',
+    waiting: 'En espera',
+    generationsLeft: 'generaciones restantes hoy',
+    limitReached: 'Límite diario alcanzado',
+    bypass: '✓ MODO PRUEBA — Sin licencia requerida',
+  }
+};
+
+// ══ US STATES ══
+const US_STATES = ['Alabama','Alaska','Arizona','Arkansas','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming','District of Columbia'];
+
+// ══ INIT ══
+window.addEventListener('DOMContentLoaded', () => {
+  buildBirthYearSelector();
+  buildStateSelector();
+  checkCaliforniaByIP();
+  renderHistorial();
+  aplicarTraduccion();
+  // Show test mode badge only in local bypass mode
+  const badge = document.getElementById('bypass-badge');
+  if (badge) badge.style.display = BYPASS_MODE ? 'inline-flex' : 'none';
+});
+
+function buildBirthYearSelector() {
+  const sel = document.getElementById('login-birth');
+  const curYear = new Date().getFullYear();
+  let html = `<option value="">— Select / Seleccioná —</option>`;
+  for (let y = curYear - 14; y >= curYear - 20; y--) {
+    html += `<option value="${y}">${y}</option>`;
+  }
+  sel.innerHTML = html;
+}
+
+function buildStateSelector() {
+  const sel = document.getElementById('pf-state');
+  let html = `<option value="">— Select state —</option>`;
+  US_STATES.forEach(s => { html += `<option value="${s}"${s==='California'?' data-ca':''}>${s}</option>`; });
+  sel.innerHTML = html;
+}
+
+function checkAge() {
+  const birthYear = parseInt(document.getElementById('login-birth').value);
+  if (!birthYear) return;
+  const age = new Date().getFullYear() - birthYear;
+  if (age < 14) {
+    document.getElementById('modal-age').classList.add('visible');
+    document.getElementById('login-birth').value = '';
+  }
+}
+
+async function checkCaliforniaByIP() {
+  try {
+    const r = await fetch('https://ipapi.co/json/', {signal: AbortSignal.timeout(4000)});
+    const d = await r.json();
+    if (d.region === 'California' || d.region_code === 'CA') {
+      document.getElementById('modal-california').classList.add('visible');
+    }
+  } catch(e) { /* silent fail — user can still declare state */ }
+}
+
+function checkStateForCalifornia() {
+  const st = document.getElementById('pf-state').value;
+  if (st === 'California') {
+    document.getElementById('modal-california').classList.add('visible');
+    document.getElementById('pf-state').value = '';
+  }
+}
+
+// ══ UI LANGUAGE ══
+function aplicarTraduccion() {
+  const t = T[uiLang];
+  const ids = {
+    'api-title':'apiTitle','api-desc':'apiDesc','api-btn':'apiBtn','lbl-apikey':'lblApiKey',
+    'login-tit':'loginTit','login-desc':'loginDesc','lbl-email':'lblEmail','lbl-clave':'lblClave',
+    'lbl-birth':'lblBirth','age-note':'ageNote','login-btn-txt':'loginBtnTxt',
+    'pf-hero-desc':'pfHeroDesc','lbl-lang-platform':'lblLangPlatform','lang-note':'langNote',
+    'lbl-student-type':'lblStudentType','stype-ell-nom':'stEllNom','stype-ell-desc':'stEllDesc',
+    'stype-native-nom':'stNativeNom','stype-native-desc':'stNativeDesc',
+    'lbl-personal':'lblPersonal','lbl-state':'lblState','lbl-city':'lblCity',
+    'lbl-name':'lblName','lbl-grade-section':'lblGradeSection','lbl-subjects':'lblSubjects',
+    'lbl-core-sug':'lblCoreSug','lbl-elective-sug':'lblElecSug','lbl-interests':'lblInterests',
+    'lbl-int-label':'lblIntLabel','lbl-ctx':'lblCtx','btn-skip':'btnSkip',
+    'btn-clear-profile':'btnClearProfile','btn-save-profile':'btnSaveProfile','pf-saved':'pfSaved',
+    'panel1-tit':'panel1Tit','panel2-tit':'panel2Tit','panel3-tit':'panel3Tit','panel4-tit':'panel4Tit',
+    'lbl-subject-gen':'lblSubjectGen','lbl-topic':'lblTopic','lbl-context-gen':'lblContextGen',
+    'lbl-suggested':'lblSuggested','ol-bil-nom':'olBilNom','ol-bil-desc':'olBilDesc',
+    'ol-en-desc':'olEnDesc','ol-es-desc':'olEsDesc','sep-material-type':'sepMaterialType',
+    'tipo-summary':'tipoSummary','tdesc-summary':'tdescSummary',
+    'tipo-explanation':'tipoExplanation','tdesc-explanation':'tdescExplanation',
+    'tipo-practice':'tipoPractice','tdesc-practice':'tdescPractice',
+    'tipo-oral':'tipoOral','tdesc-oral':'tdescOral',
+    'tipo-concept':'tipoConcept','tdesc-concept':'tdescConcept',
+    'tipo-project':'tipoProject','tdesc-project':'tdescProject',
+    'tipo-mindmap':'tipoMindmap','tdesc-mindmap':'tdescMindmap',
+    'tipo-flashcards':'tipoFlashcards','tdesc-flashcards':'tdescFlashcards',
+    'sub-prac-tit':'subPracTit','sep-savi':'sepSavi','savi-toggle-label-txt':'saviToggleLbl',
+    'sep-yt':'sepYt','yt-label-txt':'ytLabelTxt','btn-texto':'btnGenerar',
+    'res-titulo':'resTitulo','btn-go-profile':'btnGoProfile','btn-logout':'btnLogout',
+    'savi-title':'saviTitle','savi-sub':'saviSub',
+    'chat-info-txt':'chatInfoTxt','chat-note-txt':'chatNoteTxt','chat-empty-txt':'chatEmptyTxt',
+    'yt-info-txt':'ytInfoTxt','yt-empty-txt':'ytEmptyTxt',
+    'hist-title-txt':'histTitleTxt','btn-clear-hist':'btnClearHist','hist-empty-txt':'histEmptyTxt',
+    'cs-title':'csTitle','cs-desc':'csDesc','cs-badge':'csBadge',
+    'ph-txt':'phTxt','loading-txt':'loadingTxt',
+    'estado-texto': null, 'lbl-sep-attach': null,
+  };
+  Object.entries(ids).forEach(([id, key]) => {
+    if (!key) return;
+    const el = document.getElementById(id);
+    if (el && t[key] !== undefined) el.textContent = t[key];
+  });
+  // Placeholders
+  const phs = {
+    'pf-nombre': t.namePlaceholder, 'pf-city': t.cityPlaceholder,
+    'pf-mat-input': t.addSubjectPlaceholder, 'g-tema': t.topicPlaceholder,
+    'g-contexto': t.contextPlaceholder, 'chat-input': t.chatPlaceholder,
+  };
+  Object.entries(phs).forEach(([id, ph]) => {
+    const el = document.getElementById(id);
+    if (el) el.placeholder = ph;
+  });
+  // State selector first option
+  const stSel = document.getElementById('pf-state');
+  if (stSel && stSel.options[0]) stSel.options[0].text = t.stateLbl;
+  // btn add mat
+  const btnAdd = document.getElementById('btn-add-mat');
+  if (btnAdd) btnAdd.textContent = t.btnAddMat;
+  // Voice bar
+  if(document.getElementById('btnEscuchar')) document.getElementById('btnEscuchar').textContent = t.vozListen;
+  // Waiting
+  const estEl = document.getElementById('estadoTexto');
+  if (estEl && estEl.textContent === T[uiLang==='en'?'es':'en'].waiting) estEl.textContent = t.waiting;
+  // Rebuild subject chips
+  renderSugMaterias();
+}
+
+function setUiLang(lang, btn) {
+  uiLang = lang;
+  document.querySelectorAll('.lang-btn-pf').forEach(b => b.classList.remove('activo'));
+  btn.classList.add('activo');
+  aplicarTraduccion();
+}
+
+// ══ SCREEN NAVIGATION ══
+function mostrarScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ══ SCREEN 0: API KEY ══
+function selProv(prov, btn) {
+  provActual = prov;
+  document.querySelectorAll('.prov-tab').forEach(b => b.classList.remove('activo'));
+  btn.classList.add('activo');
+  document.querySelectorAll('.prov-inst').forEach(d => d.classList.remove('visible'));
+  document.getElementById('inst-' + prov).classList.add('visible');
+  document.getElementById('apikey-input').value = '';
+  const ph = {gemini:'AIza...',openai:'sk-...',anthropic:'sk-ant-...'};
+  document.getElementById('apikey-input').placeholder = ph[prov];
+}
+
+function confirmarApiKey() {
+  const key = document.getElementById('apikey-input').value.trim();
+  const err = document.getElementById('api-err');
+  err.classList.remove('visible');
+  if (!key || key.length < 20) {
+    err.textContent = uiLang === 'es' ? 'Ingresá tu API Key válida.' : 'Enter a valid API Key.';
+    err.classList.add('visible'); return;
+  }
+  apiKeyGuardada = key;
+  mostrarScreen('screen-login');
+}
+
+// ══ SCREEN 1: LOGIN ══
+function generarUUID() {
+  return 'xxxx-xxxx-4xxx-yxxx'.replace(/[xy]/g, c => {
+    const r = Math.random()*16|0, v = c==='x'?r:(r&0x3|0x8);
+    return v.toString(16);
+  });
+}
+
+function generarHuella() {
+  const key = 'brb_us_device_id';
+  let id = _store.getItem(key);
+  if (!id) { id = 'DEV-' + generarUUID().toUpperCase(); _store.setItem(key, id); }
+  return id;
+}
+
+async function verificarAcceso() {
+  const email  = document.getElementById('login-email').value.trim().toLowerCase();
+  const clave  = document.getElementById('login-clave').value.trim().toUpperCase();
+  const birth  = document.getElementById('login-birth').value;
+  const errDiv = document.getElementById('login-err');
+  const btn    = document.getElementById('login-btn');
+  errDiv.classList.remove('visible');
+
+  const t = T[uiLang];
+
+  if (!email) { errDiv.textContent = uiLang==='es'?'Ingresá tu email.':'Enter your email.'; errDiv.classList.add('visible'); return; }
+  if (!birth) { errDiv.textContent = uiLang==='es'?'Ingresá tu año de nacimiento.':'Enter your birth year.'; errDiv.classList.add('visible'); return; }
+
+  const age = new Date().getFullYear() - parseInt(birth);
+  if (age < 14) {
+    document.getElementById('modal-age').classList.add('visible'); return;
+  }
+
+  // BYPASS MODE — skip Supabase
+  if (BYPASS_MODE) {
+    sesionActiva = { email: email || BYPASS_USER.email, nombre: email || BYPASS_USER.email, ageDeclared: age, ageTimestamp: Date.now() };
+    const pfKey = 'brb_us_perfil_' + (email||'test').replace(/[@.]/g,'_');
+    const pfStr = _store.getItem(pfKey);
+    if (pfStr) { try { perfilEst = JSON.parse(pfStr); } catch(e){} }
+    if (!perfilEst || !perfilEst.grade) {
+      mostrarScreen('screen-perfil');
+    } else {
+      inicializarGenerador();
+      mostrarScreen('screen-gen');
+    }
+    return;
+  }
+
+  // PRODUCTION: Supabase verification
+  if (!clave) { errDiv.textContent = uiLang==='es'?'Ingresá tu clave de licencia.':'Enter your license key.'; errDiv.classList.add('visible'); return; }
+  btn.disabled = true; btn.classList.add('cargando');
+  document.getElementById('login-btn-txt').textContent = uiLang==='es'?'Verificando...':'Verifying...';
+
+  try {
+    const huellaActual = generarHuella();
+    const res = await fetch(
+      `${SUPA_URL}/rest/v1/licencias_inclusion?email=eq.${encodeURIComponent(email)}&herramienta=eq.${HERRAMIENTA}&select=*`,
+      {headers:{'apikey':SUPA_KEY,'Authorization':`Bearer ${SUPA_KEY}`,'Content-Type':'application/json'}}
+    );
+    if (!res.ok) throw new Error(uiLang==='es'?'Error de conexión.':'Connection error.');
+    const data = await res.json();
+    if (!data||!data.length){errDiv.textContent=uiLang==='es'?'Email no registrado.':'Email not registered.';errDiv.classList.add('visible');return;}
+    const u = data[0];
+    if (u.clave.toUpperCase()!==clave){errDiv.textContent=uiLang==='es'?'Clave de licencia incorrecta.':'Incorrect license key.';errDiv.classList.add('visible');return;}
+    if (!u.activa){errDiv.textContent=uiLang==='es'?'Licencia desactivada.':'License deactivated.';errDiv.classList.add('visible');return;}
+    const hoy=new Date(); const vence=new Date(u.fecha_vencimiento);
+    if (hoy>vence){errDiv.textContent=uiLang==='es'?`Licencia vencida el ${vence.toLocaleDateString()}.`:`License expired on ${vence.toLocaleDateString()}.`;errDiv.classList.add('visible');return;}
+    if (u.dispositivo_id&&u.dispositivo_id!==huellaActual){errDiv.textContent=uiLang==='es'?'Licencia registrada en otro dispositivo. Contactá a BRB.':'License registered on another device. Contact BRB.';errDiv.classList.add('visible');return;}
+    if (!u.dispositivo_id){
+      await fetch(`${SUPA_URL}/rest/v1/licencias_inclusion?email=eq.${encodeURIComponent(email)}&herramienta=eq.${HERRAMIENTA}`,
+        {method:'PATCH',headers:{'apikey':SUPA_KEY,'Authorization':`Bearer ${SUPA_KEY}`,'Content-Type':'application/json','Prefer':'return=minimal'},
+        body:JSON.stringify({dispositivo_id:huellaActual})});
+    }
+    sesionActiva = { email: u.email, nombre: u.email, ageDeclared: age, ageTimestamp: Date.now() };
+    const pfKey = 'brb_us_perfil_' + email.replace(/[@.]/g,'_');
+    const pfStr = _store.getItem(pfKey);
+    if (pfStr) { try { perfilEst = JSON.parse(pfStr); } catch(e){} }
+    if (!perfilEst||!perfilEst.grade) { mostrarScreen('screen-perfil'); }
+    else { inicializarGenerador(); mostrarScreen('screen-gen'); }
+  } catch(err) {
+    errDiv.textContent = uiLang==='es'?'Error de conexión. Verificá tu internet.':'Connection error. Check your internet.';
+    errDiv.classList.add('visible');
+  } finally {
+    btn.disabled=false; btn.classList.remove('cargando');
+    document.getElementById('login-btn-txt').textContent = T[uiLang].loginBtnTxt;
+  }
+}
+
+function cerrarSesion() {
+  sesionActiva=null;
+  document.getElementById('login-email').value='';
+  document.getElementById('login-clave').value='';
+  document.getElementById('login-err').classList.remove('visible');
+  mostrarScreen('screen-login');
+}
+
+// ══ SCREEN 2: PROFILE ══
+function selStudentType(type, el) {
+  studentType = type;
+  document.querySelectorAll('.stype-card').forEach(c => c.classList.remove('activo'));
+  el.classList.add('activo');
+  // Adjust output lang options for native speakers
+  ajustarOutputLangOpciones();
+}
+
+function ajustarOutputLangOpciones() {
+  const og = document.getElementById('outlang-grid');
+  if (!og) return;
+  if (studentType === 'native') {
+    og.className = 'outlang-grid';
+    document.getElementById('ol-bilingual').style.display = 'none';
+    document.getElementById('ol-es').style.display = 'none';
+    // Force English
+    selOutLang('en', document.getElementById('ol-en'));
+  } else {
+    og.className = 'outlang-grid three';
+    document.getElementById('ol-bilingual').style.display = '';
+    document.getElementById('ol-es').style.display = '';
+  }
+}
+
+function selGrade(grade, el) {
+  gradeActual = grade;
+  document.querySelectorAll('.grade-tab').forEach(t => t.classList.remove('activo'));
+  el.classList.add('activo');
+  renderSugMaterias();
+  actualizarMateriasGenerador();
+}
+
+function renderSugMaterias() {
+  const curr = CURRICULA_US[gradeActual];
+  if (!curr) return;
+  const coreDiv = document.getElementById('pf-chips-core');
+  const elecDiv = document.getElementById('pf-chips-elec');
+  if (!coreDiv || !elecDiv) return;
+  coreDiv.innerHTML = curr.core.map(c =>
+    `<span class="chip-sug" onclick="agregarMatSug('${c.name.replace(/'/g,"\\'")}','core')">${c.name}<span style="font-family:'JetBrains Mono',monospace;font-size:0.50rem;opacity:0.6;margin-left:4px;">${c.std}</span></span>`
+  ).join('');
+  elecDiv.innerHTML = curr.electives.map(e =>
+    `<span class="chip-sug elective-chip" onclick="agregarMatSug('${e.replace(/'/g,"\\'")}','elective')">${e}</span>`
+  ).join('');
+}
+
+function agregarMatSug(name, tipo) {
+  if (!pfMaterias.find(m => m.name === name)) {
+    pfMaterias.push({name, tipo});
+    renderPfMat();
+  }
+}
+
+function agregarMateria() {
+  const inp = document.getElementById('pf-mat-input');
+  const val = inp.value.trim();
+  if (!val) return;
+  if (!pfMaterias.find(m => m.name === val)) {
+    pfMaterias.push({name: val, tipo: 'custom'});
+    renderPfMat();
+  }
+  inp.value = '';
+}
+
+function quitarMat(i) { pfMaterias.splice(i,1); renderPfMat(); }
+
+function renderPfMat() {
+  document.getElementById('pf-mat-lista').innerHTML = pfMaterias.map((m,i) =>
+    `<span class="mat-tag ${m.tipo==='core'?'core':m.tipo==='elective'?'elective':'core'}">${m.name}<button onclick="quitarMat(${i})">✕</button></span>`
+  ).join('');
+}
+
+function toggleInt(el) { el.classList.toggle('activo'); }
+function getIntereses() { return Array.from(document.querySelectorAll('.int-chip.activo')).map(e => e.dataset.v); }
+
+function saltarPerfil() { inicializarGenerador(); mostrarScreen('screen-gen'); }
+function irAPerfil() { cargarFormPerfil(); mostrarScreen('screen-perfil'); }
+
+function guardarPerfil() {
+  if (!sesionActiva) { toast(uiLang==='es'?'Sesión no iniciada.':'Session not started.','err'); return; }
+  perfilEst = {
+    nombre:    document.getElementById('pf-nombre').value.trim(),
+    state:     document.getElementById('pf-state').value,
+    city:      document.getElementById('pf-city').value.trim(),
+    grade:     gradeActual,
+    studentType: studentType,
+    uiLang:    uiLang,
+    materias:  [...pfMaterias],
+    intereses: getIntereses(),
+    contexto:  document.getElementById('pf-contexto').value.trim(),
+  };
+  const pfKey = 'brb_us_perfil_' + (sesionActiva.email).replace(/[@.]/g,'_');
+  _store.setItem(pfKey, JSON.stringify(perfilEst));
+  const saved = document.getElementById('pf-saved');
+  saved.textContent = T[uiLang].pfSaved;
+  saved.classList.add('visible');
+  setTimeout(() => saved.classList.remove('visible'), 2500);
+  inicializarGenerador();
+  setTimeout(() => mostrarScreen('screen-gen'), 600);
+}
+
+function limpiarPerfil() {
+  if (!confirm(uiLang==='es'?'¿Eliminar perfil?':'Delete profile?')) return;
+  perfilEst = null; pfMaterias = [];
+  if (sesionActiva) {
+    const pfKey = 'brb_us_perfil_' + (sesionActiva.email).replace(/[@.]/g,'_');
+    _store.removeItem(pfKey);
+  }
+  renderPfMat();
+  toast(uiLang==='es'?'Perfil eliminado.':'Profile deleted.','ok');
+}
+
+function cargarFormPerfil() {
+  if (!perfilEst) return;
+  if (perfilEst.nombre) document.getElementById('pf-nombre').value = perfilEst.nombre;
+  if (perfilEst.state) { document.getElementById('pf-state').value = perfilEst.state; }
+  if (perfilEst.city) document.getElementById('pf-city').value = perfilEst.city;
+  if (perfilEst.grade) { gradeActual = perfilEst.grade; document.querySelectorAll('.grade-tab').forEach((el,i) => { const grades=['grade9','grade10','grade11','grade12']; el.classList.toggle('activo', grades[i]===perfilEst.grade); }); }
+  if (perfilEst.studentType) { studentType = perfilEst.studentType; document.querySelectorAll('.stype-card').forEach((c,i) => { c.classList.toggle('activo', (i===0&&studentType==='ell')||(i===1&&studentType==='native')); }); }
+  if (perfilEst.uiLang) { uiLang = perfilEst.uiLang; document.getElementById('langbtn-en').classList.toggle('activo', uiLang==='en'); document.getElementById('langbtn-es').classList.toggle('activo', uiLang==='es'); aplicarTraduccion(); }
+  pfMaterias = [...(perfilEst.materias||[])];
+  renderPfMat();
+  if (perfilEst.intereses) { document.querySelectorAll('.int-chip').forEach(el => { el.classList.toggle('activo', perfilEst.intereses.includes(el.dataset.v)); }); }
+  if (perfilEst.contexto) document.getElementById('pf-contexto').value = perfilEst.contexto;
+  renderSugMaterias();
+  ajustarOutputLangOpciones();
+}
+
+// ══ SCREEN 3: GENERATOR ══
+function inicializarGenerador() {
+  if (!sesionActiva) return;
+  const t = T[uiLang];
+  // Header badge
+  const badge = document.getElementById('est-badge');
+  if (badge) badge.innerHTML = `<strong>${sesionActiva.email}</strong>`;
+  // Apply profile settings
+  if (perfilEst) {
+    if (perfilEst.uiLang) uiLang = perfilEst.uiLang;
+    if (perfilEst.grade) gradeActual = perfilEst.grade;
+    if (perfilEst.studentType) studentType = perfilEst.studentType;
+  }
+  aplicarTraduccion();
+  actualizarMateriasGenerador();
+  ajustarOutputLangOpciones();
+  renderHistorial();
+  actualizarBadge(getConsultasHoy());
+  document.getElementById('fab-errores').style.display = 'flex';
+}
+
+function actualizarMateriasGenerador() {
+  const sel = document.getElementById('g-materia');
+  if (!sel) return;
+  const curr = CURRICULA_US[gradeActual];
+  let html = uiLang==='es' ? '<option value="">— Seleccioná —</option>' : '<option value="">— Select subject —</option>';
+  // From profile
+  const profileMats = perfilEst?.materias || [];
+  if (profileMats.length > 0) {
+    html += uiLang==='es' ? '<optgroup label="Mis materias">' : '<optgroup label="My subjects">';
+    profileMats.forEach(m => { html += `<option value="${m.name}">${m.name}</option>`; });
+    html += '</optgroup>';
+  }
+  // Core for grade
+  if (curr) {
+    html += uiLang==='es' ? `<optgroup label="${curr.label} — Materias obligatorias">` : `<optgroup label="${curr.label} — Core subjects">`;
+    curr.core.forEach(c => { html += `<option value="${c.name}">${c.name} (${c.std})</option>`; });
+    html += '</optgroup>';
+    html += uiLang==='es' ? '<optgroup label="Electivas / AP">' : '<optgroup label="Electives / AP">';
+    curr.electives.forEach(e => { html += `<option value="${e}">${e}</option>`; });
+    html += '</optgroup>';
+  }
+  html += `<option value="__manual__">${uiLang==='es'?'Otra materia (escribir)...':'Other subject (type)...'}</option>`;
+  sel.innerHTML = html;
+}
+
+function actualizarSugTemas() {
+  const mat = document.getElementById('g-materia').value;
+  const manual = document.getElementById('g-materia-manual');
+  const wrap = document.getElementById('cont-sug-wrap');
+  const chips = document.getElementById('cont-chips');
+  manual.style.display = mat === '__manual__' ? 'block' : 'none';
+  const temas = TOPICS_BY_SUBJECT[mat] || [];
+  if (temas.length > 0) {
+    chips.innerHTML = temas.map(t => `<span class="chip-sug" onclick="selTema('${t.replace(/'/g,"\\'")}')">${t}</span>`).join('');
+    wrap.style.display = 'block';
+  } else { wrap.style.display = 'none'; }
+}
+
+function selTema(t) { document.getElementById('g-tema').value = t; }
+
+function selOutLang(lang, btn) {
+  outputLang = lang;
+  document.querySelectorAll('.outlang-btn').forEach(b => b.classList.remove('activo'));
+  btn.classList.add('activo');
+  // Voice language
+}
+
+function selTipo(el, tipo) {
+  tipoEstudio = tipo;
+  document.querySelectorAll('.tipo-item').forEach(i => i.classList.remove('activo'));
+  el.classList.add('activo');
+  document.getElementById('sub-prac').classList.toggle('visible', tipo === 'practice');
+}
+
+function toggleChip(el) { el.classList.toggle('activo'); }
+function getSubtipos() { return Array.from(document.querySelectorAll('#sub-prac .sub-chip.activo')).map(e => e.textContent); }
+
+function toggleSavi() {
+  saviActivo = !saviActivo;
+  document.getElementById('savi-badge').textContent = saviActivo ? 'ON ✓' : 'OFF';
+  document.getElementById('savi-badge').className = 'savi-badge ' + (saviActivo ? 'on' : 'off');
+}
+
+function toggleAnalogias() {
+  analogiasActivo = !analogiasActivo;
+  document.getElementById('ana-badge').textContent = analogiasActivo ? 'ON ✓' : 'OFF';
+  document.getElementById('ana-badge').className = 'savi-badge ' + (analogiasActivo ? 'on' : 'off');
+  document.getElementById('ana-toggle-row').style.borderColor = analogiasActivo ? 'var(--gold)' : 'rgba(200,155,42,0.4)';
+}
+
+function toggleYT() {
+  ytActivo = !ytActivo;
+  document.getElementById('yt-badge').textContent = ytActivo ? 'ON ✓' : 'OFF';
+  document.getElementById('yt-badge').style.background = ytActivo ? 'var(--green-light)' : '';
+  document.getElementById('yt-badge').style.color = ytActivo ? 'var(--green)' : '';
+}
+
+// ══ FILE ATTACH ══
+function handleFile(event) { processFile(event.target.files[0]); }
+function handleDrop(event) { event.preventDefault(); document.getElementById('adj-zona').classList.remove('dragover'); processFile(event.dataTransfer.files[0]); }
+
+async function processFile(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (!['pdf','doc','docx'].includes(ext)) { toast(uiLang==='es'?'Solo PDF o Word (.docx)':'Only PDF or Word (.docx)','warn'); return; }
+  mostrarOverlay(uiLang==='es'?'Procesando archivo...':'Processing file...');
+  try {
+    if (ext === 'pdf') {
+      const buf = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+      let txt = '';
+      for (let i = 1; i <= Math.min(pdf.numPages, 8); i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        txt += content.items.map(s => s.str).join(' ') + '\n';
+      }
+      adjTexto = txt.trim(); adjNombre = file.name;
+    } else {
+      const buf = await file.arrayBuffer();
+      const result = await mammoth.extractRawText({arrayBuffer: buf});
+      adjTexto = result.value.trim(); adjNombre = file.name;
+    }
+    if (!adjTexto) throw new Error(uiLang==='es'?'No se pudo extraer texto.':'Could not extract text.');
+    document.getElementById('adj-nombre').textContent = adjNombre + ' (' + Math.round(adjTexto.length/1000) + 'k chars)';
+    document.getElementById('adj-info').classList.add('visible');
+    toast(uiLang==='es'?'Archivo procesado.':'File processed.','ok');
+  } catch(e) {
+    toast((uiLang==='es'?'Error: ':'Error: ') + e.message,'err');
+  } finally { ocultarOverlay(); }
+}
+
+function quitarAdj() { adjTexto=''; adjNombre=''; document.getElementById('adj-info').classList.remove('visible'); document.getElementById('adj-input').value=''; }
+
+// ══ PROMPT BUILDER ══
+function construirPromptUS(materia, tema, contexto) {
+  const grade     = CURRICULA_US[gradeActual]?.label || gradeActual;
+  const age       = perfilEst?.ageDeclared || sesionActiva?.ageDeclared || '16';
+  const state     = perfilEst?.state || 'United States';
+  const interests = perfilEst?.intereses?.length > 0 ? perfilEst.intereses.join(', ') : '';
+  const ctxExtra  = perfilEst?.contexto || '';
+  const subtipos  = getSubtipos();
+
+  // Standard detection
+  const stdMap = {
+    'CCSS ELA': 'CCSS ELA', 'CCSS Math': 'CCSS Math',
+    'NGSS': 'NGSS (Next Generation Science Standards)',
+    'C3 Framework': 'C3 Framework for Social Studies',
+    '': 'State Physical Education Standards'
+  };
+  const curr = CURRICULA_US[gradeActual];
+  const found = curr?.core.find(c => c.name === materia);
+  const standard = stdMap[found?.std || ''] || 'Common Core State Standards (CCSS)';
+
+  const tiposAyuda = {
+    summary:     'Generate a structured, clear, and complete SUMMARY of the topic. Organize it in sections with titles, key points, and conclusions.',
+    explanation: 'Explain the topic STEP BY STEP with concrete examples. Adapt the language and examples to the student\'s age and level.',
+    practice:    `Generate PRACTICE QUESTIONS of these types: ${subtipos.length>0?subtipos.join(', '):'multiple choice'}. Include correct answers at the end of each section.`,
+    oral:        'Generate a QUESTION & ANSWER guide to prepare for an oral exam. Answers must be clear and memorable.',
+    concept:     'Explain the CONCEPT in simple, direct terms using real-world analogies that a student of this age can understand.',
+    project:     'Generate a structured PBL PROJECT GUIDE: driving question, objectives, research steps, suggested sources, product/presentation options, and reflection.',
+    mindmap:     'Generate a TEXT-BASED MIND MAP with clear hierarchical structure using indentation and dashes. The student must be able to copy it on paper.',
+    flashcards:  'Generate 12–15 FLASHCARDS in format: QUESTION: [question] / ANSWER: [answer]. Separated clearly. Cover the most important points of the topic.',
+  };
+
+  let outputInstructions = '';
+  if (outputLang === 'bilingual') {
+    outputInstructions = `OUTPUT LANGUAGE RULES — MANDATORY. EXECUTE THIS PROCESS FOR EVERY TERM.
+
+The narrative sentences are written in SPANISH.
+For every academic, technical, or subject-specific term, execute this 4-step process:
+
+STEP 1: Identify the term you are about to write.
+STEP 2: Find its name in ENGLISH.
+STEP 3: Write the ENGLISH name in ALL CAPS.
+STEP 4: Write the Spanish translation in [brackets] immediately after.
+
+This process is UNIVERSAL — it applies identically to every subject and every domain:
+chemistry, biology, history, computer science, environmental science, medicine,
+economics, law, music, art, physical education, mathematics, or any other field.
+There are NO exceptions and NO exempt domains.
+
+CORRECT — different domains to demonstrate universality:
+CLIMATE CHANGE [cambio climático] — Environmental Science
+ALGORITHM [algoritmo] — Computer Science
+ECOSYSTEM [ecosistema] — Biology / Earth Science
+GREENHOUSE GASES [gases de efecto invernadero] — Environmental Science
+INDUSTRIAL WASTE [residuos industriales] — Environmental Science
+AIR POLLUTION [contaminación del aire] — Environmental Science
+BIODIVERSITY LOSS [pérdida de biodiversidad] — Environmental Science
+SUSTAINABLE DEVELOPMENT [desarrollo sostenible] — Environmental Science
+IMMUNE SYSTEM [sistema inmunológico] — Medicine
+SUPPLY AND DEMAND [oferta y demanda] — Economics
+CONSTITUTIONAL LAW [derecho constitucional] — Law / Social Studies
+OPERATING SYSTEM [sistema operativo] — Computer Science
+MUSICAL NOTE [nota musical] — Music
+WATER TREATMENT [tratamiento de agua] — Environmental Engineering
+HAZARDOUS WASTE [residuos peligrosos] — Environmental Science
+FOOD WEB [red alimentaria] — Biology
+CARBON EMISSIONS [emisiones de carbono] — Environmental Science
+NATURAL RESOURCES [recursos naturales] — Environmental Science
+HABITAT DESTRUCTION [destrucción de hábitats] — Environmental Science
+CIVIL RIGHTS MOVEMENT [movimiento por los derechos civiles] — History
+
+WRONG — these all fail the same way regardless of domain:
+CAMBIO CLIMÁTICO [cambio climático] — Spanish before bracket, WRONG
+ALGORITMO [algoritmo] — Spanish before bracket, WRONG
+ECOSISTEMA [ecosistema] — Spanish before bracket, WRONG
+GASES DE EFECTO INVERNADERO [gases de efecto invernadero] — Spanish before bracket, WRONG
+RESIDUOS INDUSTRIALES [residuos industriales] — Spanish before bracket, WRONG
+CONTAMINACIÓN DEL AIRE [contaminación del aire] — Spanish before bracket, WRONG
+SISTEMA INMUNOLÓGICO [sistema inmunológico] — Spanish before bracket, WRONG
+SISTEMA OPERATIVO [sistema operativo] — Spanish before bracket, WRONG
+
+SELF-CHECK — apply before every closing bracket ]:
+"Is the text before this bracket in English?" 
+If YES — correct, continue.
+If NO — stop, translate to English, rewrite, then continue.
+
+Do NOT simplify academic content — scaffold the LANGUAGE, not the concept.
+End with: PARA RECORDAR / KEY TAKEAWAYS (3-5 points, each line: oración en español. / English sentence.)
+End with: VOCABULARIO CLAVE / KEY VOCABULARY — format: ENGLISH TERM [español] — definición en español.`;
+  } else if (outputLang === 'es') {
+    outputInstructions = `OUTPUT LANGUAGE: Write the ENTIRE material in SPANISH.
+When introducing a key academic term for the first time, write it in Spanish followed by the English equivalent in parentheses: ácido (acid), neutralización (neutralization).
+End with PARA RECORDAR (3-5 key points in Spanish).`;
+  } else {
+    outputInstructions = `OUTPUT LANGUAGE: Write the ENTIRE material in ENGLISH.
+This is an ELL student — use academic language appropriate for ${grade} but with ELL scaffolding:
+define tier-2 and tier-3 vocabulary terms when first introduced, use clear sentence structures, avoid idioms without explanation.
+End with: KEY TAKEAWAYS (3-5 points) and VOCABULARY LIST (term — brief definition).`;
+  }
+
+  let studentContext = '';
+  if (studentType === 'ell') {
+    studentContext = `Student type: ELL (English Language Learner) — Spanish home language, English language of instruction.
+Approach: Scaffold LINGUISTICALLY, not conceptually. Do not reduce academic rigor — reduce language complexity.`;
+  } else {
+    studentContext = `Student type: English-native / fluent. Full academic English at ${grade} level. No linguistic scaffolding needed.`;
+    if (outputLang !== 'en') outputInstructions = `OUTPUT LANGUAGE: English. Full academic rigor appropriate for ${grade}.`;
+  }
+
+  let bloqueDoc = '';
+  if (adjTexto) {
+    bloqueDoc = `\n\nSTUDENT-PROVIDED MATERIAL (use this as the primary base for the study material):\n${'─'.repeat(60)}\n${adjTexto.slice(0,4000)}\n${'─'.repeat(60)}\n`;
+  }
+
+  let bloqueYT = '';
+  if (ytActivo) {
+    const lang = outputLang === 'bilingual' || outputLang === 'es' ? 'Spanish' : 'English';
+    bloqueYT = `\n\nYOUTUBE SEARCHES\n${'─'.repeat(60)}\nAt the end of the material, add a section "RECOMMENDED YOUTUBE SEARCHES" with exactly 3 specific search terms about "${tema}" in ${lang}, appropriate for a ${grade} student. Format:\n1. SEARCH: [exact search term]\n   Why: [what the student will find]\n2. SEARCH: [exact term]\n   Why: [description]\n3. SEARCH: [exact term]\n   Why: [description]`;
+  }
+
+  const stateNote = state === 'Texas' ? '\nNote: This student is in Texas. Reference TEKS (Texas Essential Knowledge and Skills) where applicable in addition to CCSS/NGSS.' :
+                    state === 'Florida' ? '\nNote: This student is in Florida. Reference LAFS (Florida Language Arts Standards) for ELA content.' : '';
+
+  return `You are a bilingual academic tutor specialized in US High School education.
+
+STUDENT PROFILE:
+- Grade: ${grade}
+- Age: approximately ${age} years old
+- State: ${state}
+- Subject: ${materia}
+- Aligned standard: ${standard}
+- ${studentContext}
+${interests ? `- Interests (use for examples when naturally relevant): ${interests}` : ''}
+${ctxExtra ? `- Additional context: ${ctxExtra}` : ''}
+
+TASK: ${tiposAyuda[tipoEstudio]}
+
+SPECIFIC TOPIC: ${tema}
+${contexto ? `STUDENT'S DOUBT OR CONTEXT: ${contexto}` : ''}
+${bloqueDoc}
+
+${outputInstructions}
+${stateNote}
+
+FORMAT RULES — PLAIN TEXT ONLY:
+- NO markdown: no asterisks, no # hashtags, no underscores
+- Section titles in CAPS followed by: --------
+- Lists with dash: - item
+- Formulas in plain text: H2O, E=mc2, F=ma
+- Language adapted to ${grade} level (age ~${age})
+- Maximum depth appropriate to ${standard} for ${grade}
+
+ACADEMIC INTEGRITY RULES:
+- Do NOT invent formulas, dates, statistics, or proper nouns without basis
+- If uncertain about a fact, signal it explicitly: "(verify this with your textbook)"
+- If the student's premise contains a factual error, correct it before proceeding
+- Do not reproduce copyrighted text verbatim${bloqueYT}
+
+Generate the material now.`;
+}
+
+// ══ PROMPT SAVI ══
+function construirPromptSAVI(materia, tema) {
+  const grade = CURRICULA_US[gradeActual]?.label || gradeActual;
+  const curr = CURRICULA_US[gradeActual];
+  const found = curr?.core.find(c => c.name === materia);
+  const stdMap = {'CCSS ELA':'CCSS ELA','CCSS Math':'CCSS Math','NGSS':'NGSS','C3 Framework':'C3 Framework','':`${grade} Standards`};
+  const standard = stdMap[found?.std||''] || 'CCSS';
+
+  const bilingualRule = outputLang === 'bilingual'
+    ? `BILINGUAL FORMAT — MANDATORY PROCESS FOR EVERY TERM IN EVERY FIELD:
+
+For every academic, technical, scientific, or pedagogical term you write anywhere in this output
+(in APA citation, Source, Accuracy, Verifiability, Intent, Critical AI Review — everywhere),
+execute this 4-step process:
+
+STEP 1: Identify the term.
+STEP 2: Find its English name.
+STEP 3: Write the ENGLISH name in ALL CAPS.
+STEP 4: Write the Spanish translation in [brackets] after.
+
+This process applies universally — no domain is exempt:
+chemistry, environmental science, computer science, medicine, history, economics, education, law, or any other field.
+
+CORRECT — across different domains:
+CLIMATE CHANGE [cambio climático] / ALGORITHM [algoritmo] / ECOSYSTEM [ecosistema]
+GREENHOUSE GASES [gases de efecto invernadero] / IMMUNE SYSTEM [sistema inmunológico]
+DEEP READING [lectura profunda] / CONCEPTUAL UNDERSTANDING [comprensión conceptual]
+EXAM PREPARATION [preparación para exámenes] / INTERACTIVE LEARNING [aprendizaje interactivo]
+PROJECT RESEARCH [investigación de proyecto] / PRACTICE PROBLEMS [problemas de práctica]
+TEXTBOOK [libro de texto] / STUDY ACTIVITY [actividad de estudio]
+INDUSTRIAL WASTE [residuos industriales] / AIR POLLUTION [contaminación del aire]
+SUSTAINABLE DEVELOPMENT [desarrollo sostenible] / NATURAL RESOURCES [recursos naturales]
+
+WRONG — same error regardless of domain:
+CAMBIO CLIMÁTICO [cambio climático] — Spanish before bracket
+ALGORITMO [algoritmo] — Spanish before bracket
+COMPRENSIÓN CONCEPTUAL [comprensión conceptual] — Spanish before bracket
+LECTURA PROFUNDA [lectura profunda] — Spanish before bracket
+RESIDUOS INDUSTRIALES [residuos industriales] — Spanish before bracket
+
+SELF-CHECK before every ]: Is the text before this bracket in English? If NO — stop, rewrite in English first.`
+    : outputLang === 'es'
+      ? 'Write entirely in Spanish. Include English equivalents in parentheses for key academic terms on first use.'
+      : 'Write entirely in English.';
+
+  return `You are a specialized bibliographic reviewer for US High School education.
+
+SAVI PROTOCOL — BIBLIOGRAPHIC REVIEW
+Subject: ${materia}
+Topic: ${tema}
+Grade: ${grade}
+Standard: ${standard}
+
+${bilingualRule}
+
+FORMAT RULES — NO EXCEPTIONS:
+- Plain text only: NO markdown, NO asterisks (**), NO hashtags, NO bold. Using asterisks breaks the output.
+- Section titles in CAPS followed by: --------
+- Lists with dash: - item
+
+TASK: Generate 4 to 6 verifiable, reliable bibliographic references to support this topic for a ${grade} student. References must come from sources a High School student or teacher can access.
+
+For each reference use exactly this structure:
+
+REFERENCE [N]
+--------
+APA 7 Citation: [complete reference — author, year, title, source, URL if available]
+Source: [institution or author — must be a real, verifiable entity]
+Accuracy: [VERIFIED or REQUIRES TEACHER VERIFICATION — one sentence explaining why, using ENGLISH TERM [español] format for any technical terms]
+Verifiability: [URL if known, or name the platform: Khan Academy, CK-12, Google Scholar, Library of Congress, Smithsonian, JSTOR, PhET, OpenStax, PubMed. DO NOT invent URLs.]
+Intent: [One sentence stating which STUDY ACTIVITY [actividad de estudio] this supports: SUMMARIZING [resumen], PRACTICE PROBLEMS [problemas de práctica], DEEP READING [lectura profunda], EXAM PREPARATION [preparación para exámenes], INTERACTIVE LEARNING [aprendizaje interactivo], or PROJECT RESEARCH [investigación de proyecto]]
+Reliability level: [HIGH / MEDIUM / LOW]
+
+IMPORTANT: Do NOT invent DOIs or URLs. If uncertain, name the platform or database. Honesty about uncertainty has greater educational value than a false reference.
+
+Then add at the end:
+
+CRITICAL AI REVIEW — ${tema}
+--------
+This section reviews SCIENTIFIC AND CONCEPTUAL accuracy risks only — NOT formatting issues.
+Identify 3 to 5 specific errors the AI may have made in the generated study material about ${tema} for a ${grade} ${standard} student. Focus exclusively on:
+- Factual inaccuracies (wrong formulas, wrong dates, wrong names, wrong definitions)
+- Conceptual errors inappropriate for ${grade} level (oversimplification or excessive complexity)
+- Missing critical distinctions the student needs to know for this topic and standard
+- Data or statistics that may be outdated or region-specific
+
+Potential errors the AI may have made:
+- [specific scientific or conceptual risk — not formatting]
+- [specific scientific or conceptual risk — not formatting]
+- [specific scientific or conceptual risk — not formatting]
+
+What the student MUST verify with their textbook before using this material:
+- [specific scientific item to verify against the textbook]
+- [specific scientific item to verify against the textbook]
+- [specific scientific item to verify against the textbook]
+
+Generate the SAVI review now.`;
+}
+
+// ══ PROMPT ANALOGIES ══
+function construirPromptAnalogias(materia, tema) {
+  const grade = CURRICULA_US[gradeActual]?.label || gradeActual;
+  const state = perfilEst?.state || 'United States';
+  const interests = perfilEst?.intereses?.length > 0 ? perfilEst.intereses.join(', ') : 'general interests';
+
+  const bilingualRule = outputLang === 'bilingual'
+    ? `BILINGUAL FORMAT — MANDATORY PROCESS FOR EVERY TERM IN EVERY FIELD OF THIS OUTPUT:
+
+For every academic, technical, or subject-specific term you write in ANY field
+(Description, Familiar element, Target concept, Relationships that TRANSFER, LIMIT),
+execute this 4-step process:
+
+STEP 1: Identify the term.
+STEP 2: Find its English name.
+STEP 3: Write the ENGLISH name in ALL CAPS.
+STEP 4: Write the Spanish translation in [brackets] after.
+
+This process is UNIVERSAL — it applies identically to every subject and domain.
+No domain is exempt: environmental science, chemistry, computer science, biology,
+history, medicine, economics, music, law, mathematics, or any other field.
+
+CORRECT — across radically different domains to demonstrate universality:
+CLIMATE CHANGE [cambio climático] / ALGORITHM [algoritmo] / ECOSYSTEM [ecosistema]
+GREENHOUSE GASES [gases de efecto invernadero] / OPERATING SYSTEM [sistema operativo]
+IMMUNE SYSTEM [sistema inmunológico] / NATURAL RESOURCES [recursos naturales]
+INDUSTRIAL WASTE [residuos industriales] / AIR POLLUTION [contaminación del aire]
+BIODIVERSITY LOSS [pérdida de biodiversidad] / FOOD WEB [red alimentaria]
+SUPPLY AND DEMAND [oferta y demanda] / CONSTITUTIONAL LAW [derecho constitucional]
+CHEMICAL REACTION [reacción química] / MOLECULAR INTERACTION [interacción molecular]
+IONS [iones] / MOLECULES [moléculas] / FORMATION [formación] / SCALE [escala]
+REACTIONS [reacciones] / ORGANISMS [organismos] / PROCESSES [procesos]
+
+WRONG — same error regardless of domain:
+CAMBIO CLIMÁTICO [cambio climático] — Spanish before bracket, WRONG
+ECOSISTEMA [ecosistema] — Spanish before bracket, WRONG
+ALGORITMO [algoritmo] — Spanish before bracket, WRONG
+REACCIONES QUÍMICAS [reacciones químicas] — Spanish before bracket, WRONG
+IONES [iones] — Spanish before bracket, WRONG
+MOLÉCULAS [moléculas] — Spanish before bracket, WRONG
+FORMACIÓN [formación] — Spanish before bracket, WRONG
+ORGANISMOS [organismos] — Spanish before bracket, WRONG
+PROCESOS [procesos] — Spanish before bracket, WRONG
+
+SELF-CHECK before every closing bracket ]:
+"Is the text before this bracket in English?"
+If YES — correct, continue.
+If NO — stop immediately, find the English name, rewrite, then continue.`
+    : outputLang === 'es'
+      ? 'Write entirely in Spanish. Include English equivalents in parentheses for key academic terms: ácido (acid), neutralización (neutralization).'
+      : 'Write entirely in English at the appropriate grade level.';
+
+  return `You are a specialist in instructional design and pedagogical analogies for US High School students.
+
+TASK: Generate 3 differentiated pedagogical analogies to teach the following content.
+
+Subject: ${materia}
+Topic: ${tema}
+Grade: ${grade}
+State: ${state}
+Student interests (use naturally when relevant, do not force): ${interests}
+
+${bilingualRule}
+
+FORMAT RULES — NO EXCEPTIONS:
+Plain text only. NO markdown, NO asterisks (**), NO hashtags. Using asterisks breaks the output.
+
+The 3 analogies must be of DIFFERENT types:
+
+ANALOGY 1 — EVERYDAY
+A comparison with an everyday object or situation from the life of a typical ${grade} student in the US.
+Use the student's declared interests if they connect naturally to the concept: ${interests}.
+Do not force an interest if the connection is weak — use a universal everyday reference instead.
+
+ANALOGY 2 — CONTEXTUAL / APPLIED
+A comparison with a real-world application, professional field, or technology relevant to ${grade} students in ${state}.
+The example must be specific and verifiable, not generic.
+
+ANALOGY 3 — VISUAL / PICTORIAL
+A description of a diagram or drawing that a student can reproduce on paper or a whiteboard to represent the concept.
+Describe exactly what to draw, what labels to use, and what the visual elements represent.
+
+For EACH analogy, write all fields using the bilingual rule above for every term:
+
+ANALOGY [N] — [TYPE]
+--------
+Description: [2-3 sentences in Spanish. Every technical term: ENGLISH [español].]
+Familiar element (what the student already knows): [In Spanish. Every technical term: ENGLISH [español].]
+Target concept (what is being learned): [In Spanish. Every technical term: ENGLISH [español].]
+Relationships that TRANSFER: [In Spanish. Every technical term: ENGLISH [español]. List each valid transfer point.]
+LIMIT — What does NOT transfer: [In Spanish. Every technical term: ENGLISH [español]. This field is REQUIRED. State specifically where the analogy breaks down and why.]
+Recommended moment in study session: [at the start / during explanation / as a closing review]
+Complexity level: [Basic / Intermediate / Advanced]
+
+Generate the 3 analogies now.`;
+}
+
+// ══ GENERATE ══
+async function generarEstudio() {
+  if (getConsultasHoy() >= 10) {
+    mostrarError(uiLang==='es'?'Alcanzaste el límite de 10 generaciones por día. Volvé mañana.':'You have reached the 10 generations/day limit. Come back tomorrow.');
+    return;
+  }
+  let materia = document.getElementById('g-materia').value;
+  if (materia==='__manual__'||!materia) materia = document.getElementById('g-materia-manual').value.trim();
+  if (!materia) { mostrarError(uiLang==='es'?'Seleccioná o escribí la materia.':'Select or type the subject.'); return; }
+  const tema    = document.getElementById('g-tema').value.trim();
+  const contexto= document.getElementById('g-contexto').value.trim();
+  if (!tema) { mostrarError(uiLang==='es'?'Escribí el tema que querés estudiar.':'Enter the topic you want to study.'); return; }
+  if (tipoEstudio==='practice' && getSubtipos().length===0) { mostrarError(uiLang==='es'?'Seleccioná al menos un tipo de pregunta.':'Select at least one question type.'); return; }
+
+  const btn = document.getElementById('btn-generar');
+  btn.disabled = true;
+  document.getElementById('btn-texto').textContent = uiLang==='es'?'Generando...':'Generating...';
+  document.getElementById('placeholder').style.display = 'none';
+  document.getElementById('errorMsg').classList.remove('visible');
+  document.getElementById('resultado-texto').classList.remove('visible');
+  document.getElementById('loading').classList.add('visible');
+  document.getElementById('loading-txt').textContent = T[uiLang].loadingTxt;
+  document.getElementById('vozBar').classList.remove('visible');
+  setEstado('cargando', uiLang==='es'?'Generando material...':'Generating material...', '');
+  ['btnCopiar','btnDescargar','btnLimpiar'].forEach(id => document.getElementById(id).disabled=true);
+  cambiarTab('material');
+
+  try {
+    const prompt = construirPromptUS(materia, tema, contexto);
+    textoGenerado = await llamarIA(prompt);
+
+    document.getElementById('loading').classList.remove('visible');
+    document.getElementById('resultado-texto').textContent = textoGenerado;
+    document.getElementById('resultado-texto').classList.add('visible');
+
+    vozActivarBarra();
+    incrementarConsultas();
+    ['btnCopiar','btnDescargar','btnLimpiar'].forEach(id => document.getElementById(id).disabled=false);
+
+    // Chat activation
+    document.getElementById('btn-chat').disabled = false;
+    chatHistorial = [];
+    document.getElementById('chat-msgs').innerHTML =
+      `<div class="chat-msg ia"><div class="chat-avatar">🤖</div><div class="chat-burbuja">${uiLang==='es'?`¡Material generado sobre <strong>${tema}</strong>! ¿Tenés alguna duda o querés que profundice algo?`:`Study material on <strong>${tema}</strong> is ready! Do you have questions or want me to go deeper on something?`}</div></div>`;
+
+    // YOUTUBE — always generate 3 searches from main text OR independent
+    procesarYouTube(textoGenerado, materia, tema);
+
+    // SAVI — separate AI call
+    saviGenerado = '';
+    document.getElementById('savi-resultado').style.display = 'none';
+    document.getElementById('savi-empty').style.display = 'block';
+    if (saviActivo) {
+      document.getElementById('savi-loading').style.display = 'block';
+      document.getElementById('savi-empty').style.display = 'none';
+      setEstado('cargando', uiLang==='es'?'Ejecutando protocolo SAVI...':'Running SAVI protocol...', '');
+      try {
+        saviGenerado = await llamarIA(construirPromptSAVI(materia, tema));
+        document.getElementById('savi-resultado').textContent = saviGenerado;
+        document.getElementById('savi-resultado').style.display = 'block';
+        toast(uiLang==='es'?'Revisión SAVI completada.':'SAVI review completed.','ok');
+      } catch(e) {
+        document.getElementById('savi-resultado').textContent = (uiLang==='es'?'Error al generar SAVI: ':'SAVI generation error: ') + e.message;
+        document.getElementById('savi-resultado').style.display = 'block';
+      } finally {
+        document.getElementById('savi-loading').style.display = 'none';
+      }
+    }
+
+    // ANALOGIES — separate AI call
+    analogiasGenerado = '';
+    document.getElementById('analogias-resultado').style.display = 'none';
+    document.getElementById('ana-empty').style.display = 'block';
+    if (analogiasActivo) {
+      document.getElementById('ana-loading').style.display = 'block';
+      document.getElementById('ana-empty').style.display = 'none';
+      setEstado('cargando', uiLang==='es'?'Generando analogías pedagógicas...':'Generating pedagogical analogies...', '');
+      try {
+        analogiasGenerado = await llamarIA(construirPromptAnalogias(materia, tema));
+        document.getElementById('analogias-resultado').textContent = analogiasGenerado;
+        document.getElementById('analogias-resultado').style.display = 'block';
+        toast(uiLang==='es'?'Analogías generadas.':'Analogies generated.','ok');
+      } catch(e) {
+        document.getElementById('analogias-resultado').textContent = (uiLang==='es'?'Error al generar analogías: ':'Analogies generation error: ') + e.message;
+        document.getElementById('analogias-resultado').style.display = 'block';
+      } finally {
+        document.getElementById('ana-loading').style.display = 'none';
+      }
+    }
+
+    guardarEnHistorial(materia, tema, textoGenerado);
+    const rest = 10 - getConsultasHoy();
+    setEstado('ok', `${uiLang==='es'?'Material generado':'Material generated'} · ${rest} ${T[uiLang].generationsLeft}`, '');
+    toast(uiLang==='es'?'Material generado correctamente.':'Study material generated.','ok');
+    cambiarTab('material');
+
+  } catch(err) {
+    document.getElementById('loading').classList.remove('visible');
+    mostrarError((uiLang==='es'?'Error al conectar con la IA: ':'Error connecting to AI: ') + err.message);
+    setEstado('error',uiLang==='es'?'Error de conexión':'Connection error','');
+  } finally {
+    btn.disabled=false;
+    document.getElementById('btn-texto').textContent = T[uiLang].btnGenerar;
+  }
+}
+
+// ══ AI CALLERS ══
+async function llamarIA(prompt) {
+  if (provActual==='gemini')    return await llamarGemini(prompt);
+  if (provActual==='openai')    return await llamarOpenAI(prompt);
+  if (provActual==='anthropic') return await llamarAnthropic(prompt);
+  throw new Error('No AI provider selected.');
+}
+
+async function llamarGemini(prompt) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKeyGuardada}`;
+  const res = await fetch(url, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.7,maxOutputTokens:8000}})});
+  if (!res.ok) { const e=await res.json(); throw new Error(e.error?.message||'Gemini error'); }
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
+async function llamarOpenAI(prompt) {
+  const res = await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKeyGuardada}`},body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'user',content:prompt}],max_tokens:6000,temperature:0.7})});
+  if (!res.ok) { const e=await res.json(); throw new Error(e.error?.message||'OpenAI error'); }
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || '';
+}
+
+async function llamarAnthropic(prompt) {
+  const res = await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKeyGuardada,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-opus-4-5',max_tokens:6000,messages:[{role:'user',content:prompt}]})});
+  if (!res.ok) { const e=await res.json(); throw new Error(e.error?.message||'Anthropic error'); }
+  const data = await res.json();
+  return data.content?.[0]?.text || '';
+}
+
+// ══ YOUTUBE ══
+function procesarYouTube(texto, materia, tema) {
+  const ytDiv = document.getElementById('yt-contenido');
+  const lineas = texto.split('\n');
+  const busquedas = [];
+  let enYT = false;
+  for (const linea of lineas) {
+    if (linea.includes('RECOMMENDED YOUTUBE') || linea.includes('YOUTUBE SEARCHES') || linea.includes('BUSCAR EN YOUTUBE')) { enYT=true; continue; }
+    if (enYT) {
+      const m = linea.match(/SEARCH:\s*(.+)|BUSCAR:\s*(.+)/i);
+      if (m) busquedas.push((m[1]||m[2]).trim());
+      if (busquedas.length >= 3) break;
+    }
+  }
+  // Always generate 3 independent searches regardless of what the AI returned
+  const grade = CURRICULA_US[gradeActual]?.label || 'High School';
+  const langLabel = outputLang === 'en' ? 'explained' : 'explicado';
+  const langLabel2 = outputLang === 'en' ? 'study guide' : 'guía de estudio';
+  const langLabel3 = outputLang === 'en' ? 'practice problems' : 'ejercicios resueltos';
+  const temaBase = (tema || materia || 'topic').slice(0,50);
+  if (!busquedas[0]) busquedas[0] = `${temaBase} ${grade} ${langLabel}`;
+  if (!busquedas[1]) busquedas[1] = `${temaBase} ${langLabel2}`;
+  if (!busquedas[2]) busquedas[2] = `${temaBase} ${langLabel3}`;
+
+  ytDiv.innerHTML = `<div class="yt-tit">${uiLang==='es'?'▶️ Búsquedas sugeridas — Clic para abrir YouTube':'▶️ Suggested searches — Click to open YouTube'}</div>
+    <div class="yt-btns">${busquedas.slice(0,3).map((q,i) => `
+      <a class="yt-btn" href="https://www.youtube.com/results?search_query=${encodeURIComponent(q)}" target="_blank">
+        <span class="yt-btn-ico">▶️</span>
+        <span class="yt-btn-txt"><span class="yt-btn-query">${q}</span><span class="yt-btn-desc">${uiLang==='es'?`Búsqueda ${i+1}`:`Search ${i+1}`} — click to open YouTube</span></span>
+        <span class="yt-btn-arrow">→</span>
+      </a>`).join('')}
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;color:var(--text-light);margin-top:8px;line-height:1.5;">
+      ${uiLang==='es'?'⚠ Verificá que los videos sean de fuentes confiables antes de usarlos para estudiar.':'⚠ Verify that videos are from reliable sources before using them for studying.'}
+    </div>`;
+}
+
+// ══ CHAT ══
+async function enviarChat() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  if (!textoGenerado) { toast(uiLang==='es'?'Generá el material primero.':'Generate material first.','warn'); return; }
+  input.value = '';
+  document.getElementById('btn-chat').disabled = true;
+  agregarMensajeChat('usuario', msg);
+  chatHistorial.push({role:'user', content: msg});
+
+  const grade = CURRICULA_US[gradeActual]?.label || gradeActual;
+  const lang = outputLang === 'en' ? 'English' : outputLang === 'es' ? 'Spanish' : 'bilingual (Spanish with English academic terms)';
+  const systemCtx = `You are a study tutor for a ${grade} ${studentType==='ell'?'ELL Spanish-speaking':'English-fluent'} student. The student has the following study material:\n\n${textoGenerado.slice(0,2500)}\n\nAnswer questions in ${lang}. Be concise, clear, and at the correct academic level. Plain text only — no markdown. Always end with a reminder to verify important facts with their textbook.`;
+
+  const typingId = 'typing-' + Date.now();
+  agregarMensajeChat('ia', '...', typingId);
+
+  try {
+    const promptChat = systemCtx + '\n\nStudent question: ' + msg + '\n\nAnswer directly and concisely.';
+    const respuesta = await llamarIA(promptChat);
+    chatHistorial.push({role:'assistant', content: respuesta});
+    const typingEl = document.getElementById(typingId);
+    if (typingEl) typingEl.querySelector('.chat-burbuja').textContent = respuesta;
+  } catch(err) {
+    const typingEl = document.getElementById(typingId);
+    if (typingEl) typingEl.querySelector('.chat-burbuja').textContent = 'Error: ' + err.message;
+  } finally {
+    document.getElementById('btn-chat').disabled = false;
+    input.focus();
+  }
+}
+
+function agregarMensajeChat(rol, texto, id) {
+  const msgs = document.getElementById('chat-msgs');
+  const div = document.createElement('div');
+  div.className = `chat-msg ${rol}`;
+  if (id) div.id = id;
+  div.innerHTML = `<div class="chat-avatar">${rol==='ia'?'🤖':'👤'}</div><div class="chat-burbuja">${texto.replace(/</g,'&lt;')}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+// ══ RESULT ACTIONS ══
+function copiarTexto() {
+  navigator.clipboard.writeText(textoGenerado).then(() => {
+    const btn = document.getElementById('btnCopiar');
+    btn.textContent = uiLang==='es'?'✓ Copiado':'✓ Copied';
+    setTimeout(() => btn.textContent = T[uiLang].btnCopyTxt, 2000);
+  });
+}
+
+function descargarTexto() {
+  let materia = document.getElementById('g-materia').value;
+  if (!materia||materia==='__manual__') materia = document.getElementById('g-materia-manual').value||'subject';
+  const tema = document.getElementById('g-tema').value.trim().slice(0,40)||'topic';
+  const fecha = new Date().toLocaleDateString('en-US').replace(/\//g,'-');
+  const grade = CURRICULA_US[gradeActual]?.label || gradeActual;
+  const sep = '='.repeat(60);
+  const pie = `\n\n${sep}\nGENERATED WITH BRB STUDY GENERATOR US v1.0\n${sep}\nBoris Rodriguez Barrera · BRB Estrategia & Procesos\nSoberania Tecnica Ediciones · ORCID: 0009-0004-6583-6439\nbbbarrera1986@gmail.com · Puerto Madryn, Argentina\n${sep}\nStandards: CCSS · NGSS · C3 Framework · ESSA 2015\nGrade: ${grade} | Subject: ${materia} | Topic: ${tema}\nOutput language: ${outputLang} | Student type: ${studentType}\nDate: ${fecha}\n${sep}\nSAVI PROTOCOL — VERIFY BEFORE USE:\nS - Source: Confirm information with your textbook or teacher.\nA - Accuracy: Verify every formula, date, and statistic.\nV - Verifiability: Do not use unverifiable data for graded work.\nI - Intent: AI generates probable text, not guaranteed truth.\nReferences: SIFT Method (Stanford) · CRAAP Test\n${sep}`;
+  const blob = new Blob([textoGenerado+pie],{type:'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=`BRB_Study_${materia.replace(/\s+/g,'_')}_${fecha}.txt`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function limpiarOutput() {
+  textoGenerado=''; saviGenerado=''; analogiasGenerado=''; vozSecciones=[]; vozSeccionActual=0;
+  document.getElementById('resultado-texto').textContent='';
+  document.getElementById('resultado-texto').classList.remove('visible');
+  document.getElementById('placeholder').style.display='flex';
+  document.getElementById('errorMsg').classList.remove('visible');
+  document.getElementById('vozBar').classList.remove('visible');
+  document.getElementById('savi-resultado').style.display='none';
+  document.getElementById('savi-empty').style.display='block';
+  document.getElementById('analogias-resultado').style.display='none';
+  document.getElementById('ana-empty').style.display='block';
+  document.getElementById('btn-chat').disabled=true;
+  document.getElementById('chat-msgs').innerHTML=`<div style="font-family:'JetBrains Mono',monospace;font-size:0.63rem;color:var(--text-light);text-align:center;padding:20px;">${T[uiLang].chatEmptyTxt}</div>`;
+  document.getElementById('yt-contenido').innerHTML=`<div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text-light);text-align:center;padding:30px 20px;opacity:0.6;">${T[uiLang].ytEmptyTxt}</div>`;
+  chatHistorial=[];
+  vozDetener();
+  ['btnCopiar','btnDescargar','btnLimpiar'].forEach(id=>document.getElementById(id).disabled=true);
+  setEstado('',T[uiLang].waiting,'');
+  cambiarTab('material');
+}
+
+// ══ TABS ══
+function cambiarTab(tab) {
+  tabActual = tab;
+  const tabs = ['material','chat','savi','analogias','yt','hist','docente'];
+  tabs.forEach(t => {
+    const el = document.getElementById('tab-'+t);
+    const btn = document.getElementById('rtab-'+t);
+    if (el) el.style.display = t===tab ? 'block' : 'none';
+    if (btn) btn.classList.toggle('activo', t===tab);
+  });
+  if (tab !== 'material') document.getElementById('vozBar').classList.remove('visible');
+  else if (textoGenerado) vozActivarBarra();
+}
+
+// ══ DAILY LIMIT ══
+function getConsultasHoy() {
+  const hoy = new Date().toISOString().slice(0,10);
+  const data = JSON.parse(_store.getItem('brb_us_consultas')||'{}');
+  return data.fecha===hoy ? (data.count||0) : 0;
+}
+function incrementarConsultas() {
+  const hoy = new Date().toISOString().slice(0,10);
+  const count = getConsultasHoy()+1;
+  _store.setItem('brb_us_consultas', JSON.stringify({fecha:hoy,count}));
+  actualizarBadge(count);
+}
+function actualizarBadge(count) {
+  const badge = document.getElementById('consultas-badge');
+  if (!badge) return;
+  const rest = 10-count;
+  badge.style.display='inline-block';
+  badge.textContent = rest>0 ? `${rest} ${T[uiLang].generationsLeft}` : T[uiLang].limitReached;
+  badge.className = 'consultas-badge'+(rest<=0?' agotado':'');
+}
+
+// ══ HISTORY ══
+function guardarEnHistorial(materia, tema, texto) {
+  const hist = JSON.parse(_store.getItem('brb_us_historial')||'[]');
+  const ytHTML = document.getElementById('yt-contenido')?.innerHTML || '';
+  const ytTiene = ytHTML.includes('yt-btn');
+  hist.unshift({
+    id: Date.now(), materia, tema, texto,
+    fecha: new Date().toLocaleDateString('en-US'),
+    chat: [...chatHistorial],
+    ytHTML: ytTiene ? ytHTML : '',
+    outputLang, studentType, grade: gradeActual,
+    standard: CURRICULA_US[gradeActual]?.core.find(c=>c.name===materia)?.std || 'CCSS'
+  });
+  if (hist.length > 15) hist.pop();
+  _store.setItem('brb_us_historial', JSON.stringify(hist));
+  renderHistorial();
+}
+
+function renderHistorial() {
+  const hist = JSON.parse(_store.getItem('brb_us_historial')||'[]');
+  const lista = document.getElementById('histLista');
+  if (!lista) return;
+  if (!hist.length) {
+    lista.innerHTML = `<div style="font-family:'JetBrains Mono',monospace;font-size:0.63rem;color:var(--text-light);text-align:center;padding:20px;">${T[uiLang].histEmptyTxt}</div>`;
+    return;
+  }
+  lista.innerHTML = hist.map((h,i) => `
+    <div class="hist-item">
+      <div class="hist-info" onclick="cargarHistorial(${i})" title="${h.tema}">${h.materia} · ${h.tema.slice(0,28)}</div>
+      <span class="hist-fecha">${h.fecha}</span>
+      <button class="hist-del" onclick="borrarHistorial(${h.id})">✕</button>
+    </div>`).join('');
+}
+
+function cargarHistorial(i) {
+  const hist = JSON.parse(_store.getItem('brb_us_historial')||'[]');
+  if (!hist[i]) return;
+  const h = hist[i];
+  textoGenerado = h.texto;
+  document.getElementById('placeholder').style.display = 'none';
+  document.getElementById('resultado-texto').textContent = textoGenerado;
+  document.getElementById('resultado-texto').classList.add('visible');
+  vozActivarBarra();
+  ['btnCopiar','btnDescargar','btnLimpiar'].forEach(id => document.getElementById(id).disabled=false);
+  chatHistorial = h.chat || [];
+  const chatMsgs = document.getElementById('chat-msgs');
+  if (chatHistorial.length > 0) {
+    chatMsgs.innerHTML = '';
+    chatHistorial.forEach(m => {
+      const rol = m.role==='user' ? 'usuario' : 'ia';
+      const div = document.createElement('div');
+      div.className = `chat-msg ${rol}`;
+      div.innerHTML = `<div class="chat-avatar">${rol==='ia'?'🤖':'👤'}</div><div class="chat-burbuja">${m.content.replace(/</g,'&lt;')}</div>`;
+      chatMsgs.appendChild(div);
+    });
+  } else { chatMsgs.innerHTML = `<div style="font-family:'JetBrains Mono',monospace;font-size:0.63rem;color:var(--text-light);text-align:center;padding:20px;">${T[uiLang].chatEmptyTxt}</div>`; }
+  document.getElementById('btn-chat').disabled = false;
+  if (h.ytHTML) document.getElementById('yt-contenido').innerHTML = h.ytHTML;
+  setEstado('ok', `${uiLang==='es'?'Cargado':'Loaded'}: ${h.materia} · ${h.tema.slice(0,25)}`, '');
+  cambiarTab('material');
+}
+
+function borrarHistorial(id) {
+  let hist = JSON.parse(_store.getItem('brb_us_historial')||'[]');
+  hist = hist.filter(h => h.id !== id);
+  _store.setItem('brb_us_historial', JSON.stringify(hist));
+  renderHistorial();
+}
+function limpiarHistorial() {
+  if (!confirm(uiLang==='es'?'¿Eliminar todo el historial?':'Delete all history?')) return;
+  _store.removeItem('brb_us_historial'); renderHistorial();
+}
+
+// ══ VOICE ══
+function vozPartirSecciones(texto) {
+  const partes = texto.split(/\n-{6,}\n|\n\n+/);
+  return partes.map(p => p.trim()).filter(p => p.length > 10);
+}
+function vozActivarBarra() {
+  vozSecciones = vozPartirSecciones(textoGenerado);
+  vozSeccionActual = 0;
+  document.getElementById('vozBar').classList.add('visible');
+  document.getElementById('btnEscuchar').disabled = false;
+  document.getElementById('btnAnterior').disabled = true;
+  document.getElementById('btnSiguiente').disabled = vozSecciones.length <= 1;
+  vozActualizarProg();
+}
+function vozActualizarProg() {
+  const total = vozSecciones.length;
+  document.getElementById('vozProg').textContent = total>1 ? `${uiLang==='es'?'Sección':'Section'} ${vozSeccionActual+1} ${uiLang==='es'?'de':'of'} ${total}` : '';
+}
+function vozEscuchar() {
+  if (!window.speechSynthesis) { alert(uiLang==='es'?'Tu navegador no soporta voz. Usá Chrome o Edge.':'Your browser doesn\'t support speech. Use Chrome or Edge.'); return; }
+  if (!vozSecciones.length) { vozSecciones = vozPartirSecciones(textoGenerado); vozSeccionActual=0; }
+  vozReproducirSeccion(vozSeccionActual);
+}
+function vozReproducirSeccion(idx) {
+  if (!window.speechSynthesis) return;
+  if (idx<0||idx>=vozSecciones.length) { vozReset(); return; }
+  vozPausado=false; window.speechSynthesis.cancel();
+  vozSeccionActual=idx; vozActualizarProg();
+  vozUtterance = new SpeechSynthesisUtterance(vozSecciones[idx]);
+  vozUtterance.lang = (outputLang==='en') ? 'en-US' : 'es-US';
+  vozUtterance.rate = parseFloat(document.getElementById('vozVel').value);
+  vozUtterance.onstart = () => {
+    document.getElementById('btnEscuchar').style.display='none';
+    document.getElementById('btnPausar').style.display='inline-flex';
+    document.getElementById('btnContinuar').style.display='none';
+    document.getElementById('btnDetener').disabled=false;
+    document.getElementById('btnAnterior').disabled=(vozSeccionActual===0);
+    document.getElementById('btnSiguiente').disabled=(vozSeccionActual>=vozSecciones.length-1);
+  };
+  vozUtterance.onend = () => {
+    if (vozSeccionActual < vozSecciones.length-1) setTimeout(() => vozReproducirSeccion(vozSeccionActual+1), 100);
+    else vozReset();
+  };
+  vozUtterance.onerror = (e) => { if (e.error!=='canceled') vozReset(); };
+  window.speechSynthesis.speak(vozUtterance);
+}
+function vozSeccionAnterior() { if (vozSeccionActual>0) vozReproducirSeccion(vozSeccionActual-1); }
+function vozSeccionSiguiente() { if (vozSeccionActual<vozSecciones.length-1) vozReproducirSeccion(vozSeccionActual+1); }
+function vozPausar() { if (window.speechSynthesis.speaking&&!vozPausado){ window.speechSynthesis.pause(); vozPausado=true; document.getElementById('btnPausar').style.display='none'; document.getElementById('btnContinuar').style.display='inline-flex'; document.getElementById('vozProg').textContent=`⏸ ${uiLang==='es'?'Pausado':'Paused'} · ${vozSeccionActual+1}/${vozSecciones.length}`; } }
+function vozContinuar() { if (vozPausado){ window.speechSynthesis.resume(); vozPausado=false; document.getElementById('btnPausar').style.display='inline-flex'; document.getElementById('btnContinuar').style.display='none'; vozActualizarProg(); } }
+function vozDetener() { window.speechSynthesis.cancel(); vozReset(); }
+function vozReset() { vozPausado=false; document.getElementById('btnEscuchar').style.display='inline-flex'; document.getElementById('btnPausar').style.display='none'; document.getElementById('btnContinuar').style.display='none'; document.getElementById('btnDetener').disabled=true; document.getElementById('btnAnterior').disabled=(vozSeccionActual===0); document.getElementById('btnSiguiente').disabled=(vozSecciones.length<=1); vozActualizarProg(); }
+
+// ══ UTILITIES ══
+function setEstado(tipo,texto,tokens) {
+  document.getElementById('estadoDot').className='estado-dot'+(tipo?' '+tipo:'');
+  document.getElementById('estadoTexto').textContent=texto;
+  document.getElementById('tokensInfo').textContent=tokens||'';
+}
+function mostrarError(msg) {
+  document.getElementById('placeholder').style.display='none';
+  document.getElementById('loading').classList.remove('visible');
+  const err=document.getElementById('errorMsg'); err.textContent=msg; err.classList.add('visible');
+  setEstado('error',uiLang==='es'?'Error':'Error','');
+}
+function mostrarOverlay(msg) { document.getElementById('ov-txt').textContent=msg||'Processing...'; document.getElementById('overlay').classList.add('visible'); }
+function ocultarOverlay() { document.getElementById('overlay').classList.remove('visible'); }
+let toastTimer;
+function toast(msg,tipo='info') { const t=document.getElementById('toast'); t.textContent=msg; t.className='show '+tipo; clearTimeout(toastTimer); toastTimer=setTimeout(()=>{t.className='';},3000); }
+
+function abrirModalErrores() {
+  document.getElementById('modal-ayuda-us').style.display = 'flex';
+}
+function cerrarModalErrores() {
+  document.getElementById('modal-ayuda-us').style.display = 'none';
+}
+</script>
+
+<!-- ══ MODAL AYUDA / DIAGNÓSTICO ══ -->
+<div id="modal-ayuda-us" onclick="if(event.target===this)cerrarModalErrores()" style="display:none;position:fixed;inset:0;background:rgba(7,24,48,0.92);z-index:9800;align-items:center;justify-content:center;padding:1rem;">
+  <div style="background:#0d1117;border:1px solid #1e2a3a;border-top:3px solid var(--gold);max-width:640px;width:100%;max-height:88vh;overflow-y:auto;border-radius:var(--radius-lg);">
+    <div style="padding:1.2rem 1.5rem;border-bottom:1px solid #1e2a3a;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#0d1117;z-index:1;">
+      <span style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--gold);">Help &amp; Error Diagnostics</span>
+      <button onclick="cerrarModalErrores()" style="background:none;border:none;color:#555;cursor:pointer;font-size:1.2rem;">✕</button>
+    </div>
+    <div style="padding:1.3rem;display:flex;flex-direction:column;gap:0.85rem;">
+
+      <div style="border:1px solid #1e2a3a;padding:0.9rem;border-radius:var(--radius);">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.60rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:0.45rem;">🔑 Invalid API Key</div>
+        <div style="font-size:0.77rem;color:#888;line-height:1.65;"><span style="font-family:'JetBrains Mono',monospace;font-size:0.53rem;background:#1a1a1a;color:#666;padding:1px 6px;margin-right:0.3rem;">SYMPTOM</span>Error 401 or 403 when generating.<br><span style="font-family:'JetBrains Mono',monospace;font-size:0.53rem;background:#1a1a1a;color:#666;padding:1px 6px;margin-right:0.3rem;">SOLUTION</span>Gemini key starts with <code style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;background:#111;padding:0.15rem 0.35rem;color:#F7F2EA;">AIza</code>. OpenAI: <code style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;background:#111;padding:0.15rem 0.35rem;color:#F7F2EA;">sk-</code>. Claude: <code style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;background:#111;padding:0.15rem 0.35rem;color:#F7F2EA;">sk-ant-</code>. No spaces.</div>
+      </div>
+
+      <div style="border:1px solid #1e2a3a;padding:0.9rem;border-radius:var(--radius);">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.60rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:0.45rem;">📊 API Quota Exceeded</div>
+        <div style="font-size:0.77rem;color:#888;line-height:1.65;"><span style="font-family:'JetBrains Mono',monospace;font-size:0.53rem;background:#1a1a1a;color:#666;padding:1px 6px;margin-right:0.3rem;">SYMPTOM</span>Error 429 — "quota exceeded" or "limit: 0".<br><span style="font-family:'JetBrains Mono',monospace;font-size:0.53rem;background:#1a1a1a;color:#666;padding:1px 6px;margin-right:0.3rem;">SOLUTION</span>Gemini free: wait 1 minute. If limit shows 0, the model may not be available in your region — try a different provider.</div>
+      </div>
+
+      <div style="border:1px solid #1e2a3a;padding:0.9rem;border-radius:var(--radius);">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.60rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:0.45rem;">✂️ Output Cut Off / Incomplete Material</div>
+        <div style="font-size:0.77rem;color:#888;line-height:1.65;"><span style="font-family:'JetBrains Mono',monospace;font-size:0.53rem;background:#1a1a1a;color:#666;padding:1px 6px;margin-right:0.3rem;">SYMPTOM</span>Generated text stops abruptly mid-sentence.<br><span style="font-family:'JetBrains Mono',monospace;font-size:0.53rem;background:#1a1a1a;color:#666;padding:1px 6px;margin-right:0.3rem;">SOLUTION</span>Try a simpler study type (Summary or Concept) or reduce context length. Use Chat AI tab to ask for the missing section.</div>
+      </div>
+
+      <div style="border:1px solid #1e2a3a;padding:0.9rem;border-radius:var(--radius);">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.60rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:0.45rem;">⏰ License Expired or Device Not Authorized</div>
+        <div style="font-size:0.77rem;color:#888;line-height:1.65;"><span style="font-family:'JetBrains Mono',monospace;font-size:0.53rem;background:#1a1a1a;color:#666;padding:1px 6px;margin-right:0.3rem;">SOLUTION</span>Contact BRB Estrategia &amp; Procesos — bbbarrera1986@gmail.com · +54 297 517-6351.</div>
+      </div>
+
+      <div style="border:1px solid #1e2a3a;padding:0.9rem;border-radius:var(--radius);">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.60rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:0.45rem;">💾 Daily Limit of 10 Generations Reached</div>
+        <div style="font-size:0.77rem;color:#888;line-height:1.65;"><span style="font-family:'JetBrains Mono',monospace;font-size:0.53rem;background:#1a1a1a;color:#666;padding:1px 6px;margin-right:0.3rem;">SOLUTION</span>Resets at midnight. Your history and saved sessions are not lost. Use Chat AI tab to continue working without using a generation.</div>
+      </div>
+
+      <div style="border:1px solid #1e2a3a;padding:0.9rem;border-radius:var(--radius);">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.60rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:0.45rem;">🌐 Connection Error / No Internet</div>
+        <div style="font-size:0.77rem;color:#888;line-height:1.65;"><span style="font-family:'JetBrains Mono',monospace;font-size:0.53rem;background:#1a1a1a;color:#666;padding:1px 6px;margin-right:0.3rem;">SOLUTION</span>Check your internet. Temporarily disable ad blockers and VPN. SAVI and Analogies use separate API calls — if they fail, the main material is still saved.</div>
+      </div>
+
+      <div style="border:1px solid #1e2a3a;padding:0.9rem;border-radius:var(--radius);">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.60rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:0.45rem;">📄 Attached File Does Not Process</div>
+        <div style="font-size:0.77rem;color:#888;line-height:1.65;"><span style="font-family:'JetBrains Mono',monospace;font-size:0.53rem;background:#1a1a1a;color:#666;padding:1px 6px;margin-right:0.3rem;">SOLUTION</span>Scanned PDFs (images) are not readable. Use PDF with selectable text or Word .docx format.</div>
+      </div>
+
+      <div style="border:1px solid #1e2a3a;padding:0.9rem;border-radius:var(--radius);">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.60rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:0.45rem;">📋 SAVI or Analogies Show Error</div>
+        <div style="font-size:0.77rem;color:#888;line-height:1.65;"><span style="font-family:'JetBrains Mono',monospace;font-size:0.53rem;background:#1a1a1a;color:#666;padding:1px 6px;margin-right:0.3rem;">SOLUTION</span>They are separate API calls. The main material is already saved. Regenerate by generating the full material again with the toggle ON.</div>
+      </div>
+
+      <div style="border:1px solid #1e2a3a;padding:0.9rem;border-radius:var(--radius);">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.60rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:0.45rem;">💻 Blank Screen on Load</div>
+        <div style="font-size:0.77rem;color:#888;line-height:1.65;"><span style="font-family:'JetBrains Mono',monospace;font-size:0.53rem;background:#1a1a1a;color:#666;padding:1px 6px;margin-right:0.3rem;">SOLUTION</span>Ctrl+Shift+R to force reload. If it persists, open F12 → Console, copy the error and contact BRB.</div>
+      </div>
+
+    </div>
+    <div style="padding:0.75rem 1.3rem;border-top:1px solid #1e2a3a;font-family:'JetBrains Mono',monospace;font-size:0.53rem;color:#333;text-align:center;">
+      BRB Study Generator US v1.0 · BRB Estrategia &amp; Procesos · ORCID: 0009-0004-6583-6439 · bbbarrera1986@gmail.com
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
